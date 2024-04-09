@@ -68,3 +68,25 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+# Useful Links
+
+## recharts
+
+https://www.geeksforgeeks.org/create-a-line-chart-using-recharts-in-reactjs/
+
+## Using express
+
+https://www.freecodecamp.org/news/create-a-react-frontend-a-node-express-backend-and-connect-them-together-c5798926047c/
+
+## Walkthrough
+
+https://www.youtube.com/watch?v=T8mqZZ0r-RA
+
+## Oracle db
+
+https://oracle.github.io/node-oracledb/
+
+## Connecting db
+
+https://www.altcademy.com/blog/how-to-connect-to-database-in-reactjs/
