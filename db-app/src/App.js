@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import OverviewPage from "./overview";
+import TemperatureDependentMortalityPage from "./tempMortality";
 import "./App.css";
 
 function App() {
@@ -28,7 +29,7 @@ function App() {
       <div className="content">
         {activeTab === "Overview" && <OverviewPage/>}
         {activeTab === "Flight Delays" && <FlightDelaysTab/>}
-        {activeTab === "Temperature-Dependent Mortality" && <TemperatureDependentMortalityTab/>}
+        {activeTab === "Temperature-Dependent Mortality" && <TemperatureDependentMortalityPage/>}
         {activeTab === "Invasive Insects" && <InvasiveInsectsTab/>}
         {activeTab === "Housing Index" && <HousingIndexTab/>}
         {activeTab === "Government Spending" && <GovernmentSpendingTab/>}
@@ -39,10 +40,6 @@ function App() {
 
 function FlightDelaysTab() {
   return <div>Flight Delays Page</div>;
-}
-
-function TemperatureDependentMortalityTab() {
-  return <div>Temperature-Dependent Mortality</div>;
 }
 
 function InvasiveInsectsTab() {
