@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import OverviewPage from "./overview";
 import "./App.css";
 
 function App() {
@@ -26,37 +27,33 @@ function App() {
       </div>
       <div className="content">
         {activeTab === "Overview" && <OverviewPage/>}
-        {activeTab === "Flight Delays" && <FlightDelaysPage/>}
-        {activeTab === "Temperature-Dependent Mortality" && <TemperatureDependentMortalityPage/>}
-        {activeTab === "Invasive Insects" && <InvasiveInsects/>}
-        {activeTab === "Housing Index" && <HousingIndex/>}
-        {activeTab === "Government Spending" && <GovernmentSpending/>}
+        {activeTab === "Flight Delays" && <FlightDelaysTab/>}
+        {activeTab === "Temperature-Dependent Mortality" && <TemperatureDependentMortalityTab/>}
+        {activeTab === "Invasive Insects" && <InvasiveInsectsTab/>}
+        {activeTab === "Housing Index" && <HousingIndexTab/>}
+        {activeTab === "Government Spending" && <GovernmentSpendingTab/>}
       </div>
     </div>
   );
 }
 
-function OverviewPage() {
-  return <div>Overview Page</div>;
-}
-
-function FlightDelaysPage() {
+function FlightDelaysTab() {
   return <div>Flight Delays Page</div>;
 }
 
-function TemperatureDependentMortalityPage() {
+function TemperatureDependentMortalityTab() {
   return <div>Temperature-Dependent Mortality</div>;
 }
 
-function InvasiveInsects() {
+function InvasiveInsectsTab() {
   return <div>Invasive Insects</div>;
 }
 
-function HousingIndex() {
+function HousingIndexTab() {
   return <div>Housing Index</div>;
 }
 
-function GovernmentSpending() {
+function GovernmentSpendingTab() {
   return <div>Government Spending</div>;
 }
 
