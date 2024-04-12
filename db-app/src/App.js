@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import OverviewPage from "./overview";
 import TemperatureDependentMortalityPage from "./tempMortality";
-import InvasiveInsectsTab from "./invasiveInsects.js"
+import InvasiveInsectsTab from "./invasiveInsects.js";
 import "./App.css";
 
 function App() {
@@ -17,7 +17,14 @@ function App() {
         <h1>Exploring Environmental Resilience and Response</h1>
       </header>
       <div className="tabs">
-        {["Overview", "Flight Delays", "Temperature-Dependent Mortality", "Invasive Insects", "Housing Index", "Government Spending"].map(tab => (
+        {[
+          "Overview",
+          "Severe Weather",
+          "Temperature-Dependent Mortality",
+          "Invasive Insects",
+          "Housing Index",
+          "Government Spending",
+        ].map((tab) => (
           <div
             key={tab}
             className={`tab ${activeTab === tab ? "active" : ""}`}
@@ -28,19 +35,21 @@ function App() {
         ))}
       </div>
       <div className="content">
-        {activeTab === "Overview" && <OverviewPage/>}
-        {activeTab === "Flight Delays" && <FlightDelaysTab/>}
-        {activeTab === "Temperature-Dependent Mortality" && <TemperatureDependentMortalityPage/>}
-        {activeTab === "Invasive Insects" && <InvasiveInsectsTab/>}
-        {activeTab === "Housing Index" && <HousingIndexTab/>}
-        {activeTab === "Government Spending" && <GovernmentSpendingTab/>}
+        {activeTab === "Overview" && <OverviewPage />}
+        {activeTab === "Severe Weather" && <SevereWeatherTab />}
+        {activeTab === "Temperature-Dependent Mortality" && (
+          <TemperatureDependentMortalityPage />
+        )}
+        {activeTab === "Invasive Insects" && <InvasiveInsectsTab />}
+        {activeTab === "Housing Index" && <HousingIndexTab />}
+        {activeTab === "Government Spending" && <GovernmentSpendingTab />}
       </div>
     </div>
   );
 }
 
-function FlightDelaysTab() {
-  return <div>Flight Delays Page</div>;
+function SevereWeatherTab() {
+  return <div>Severe Weather Page</div>;
 }
 
 function HousingIndexTab() {
