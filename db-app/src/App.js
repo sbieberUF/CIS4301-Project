@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import OverviewPage from "./overview";
 import TemperatureDependentMortalityPage from "./tempMortality";
+import InvasiveInsectsTab from "./invasiveInsects.js"
 import "./App.css";
 
 function App() {
@@ -40,10 +41,6 @@ function App() {
 
 function FlightDelaysTab() {
   return <div>Flight Delays Page</div>;
-}
-
-function InvasiveInsectsTab() {
-  return <div>Invasive Insects</div>;
 }
 
 function HousingIndexTab() {
