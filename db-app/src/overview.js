@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const totaltupletext = 'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty)';
+
 async function totalTupleGetter(){
-  axios.get("http://localhost:5001/",  { crossdomain: true }).then(response => {
+  axios.get(`http://localhost:5001/?query=${encodeURIComponent(totaltupletext)}`,  { crossdomain: true }).then(response => {
       alert("Total Number of Tuples: " + response.data);
     });
 }
