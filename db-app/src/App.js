@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import OverviewPage from "./overview";
 import TemperatureDependentMortalityPage from "./tempMortality";
 import InvasiveInsectsTab from "./invasiveInsects.js";
+import SevereWeatherTab from "./severeWeather.js";
 import "./App.css";
 
 function App() {
@@ -48,9 +49,9 @@ function App() {
   );
 }
 
-function SevereWeatherTab() {
-  return <div>Severe Weather Page</div>;
-}
+// function SevereWeatherTab() {
+//   return <div>Severe Weather Page</div>;
+// }
 
 function HousingIndexTab() {
   return <div>Housing Index</div>;
