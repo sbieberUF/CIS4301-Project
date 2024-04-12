@@ -4,6 +4,9 @@ const { initDB } = require("./db");
 
 const app = express();
 
+var cors = require('cors');
+app.use(cors());
+
 const connPromise = initDB();
 
 const PORT = process.env.PORT || 5001;
@@ -11,14 +14,15 @@ const PORT = process.env.PORT || 5001;
 // root route
 app.get("/", async (req, res) => {
   // resolve the promise, for the connection, change the credentials in .env file
+  const { query } = req.query;
+
   const conn = await connPromise;
 
   // pass in the query to execute
-  const result = await conn.execute("SELECT * FROM POPULATION");
+  const result = await conn.execute(query);
 
   // get the result
-  console.log(result.rows);
-  return res.send(result.rows);
+  res.send(result.rows);
 });
 
 app.listen(PORT, () => {
