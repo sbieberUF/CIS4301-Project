@@ -6,7 +6,14 @@ function OverviewPage() {
   const showPreview = (tab) => {
     switch (tab) {
       case "Severe Weather":
-        setPreview("Severe Weather Preview/Summary");
+        setPreview(
+          "This page allows users to analyze storm data from 1950 to 2023 (grouped by either decade, year, or month),\n" +
+            "and allow them to select the time interval, specific types weather events or all weather events, " +
+            "as well as possible fatality types associated with those events." +
+            " The data is then presented in 3 graphs: (1) Frequency of storm events with respect to time." +
+            " (2) Frequency of related deaths with respect to time" +
+            " (3) Average age of deaths with respect to time"
+        );
         break;
       case "Temperature-Dependent Mortality":
         setPreview("Mortality Preview/Summary");
