@@ -31,3 +31,7 @@
 .tab:not(:last-child) {
   margin-right: 10px;
 }
+
+.longtext {
+  padding: 10px 20px;
+}
