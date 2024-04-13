@@ -12,24 +12,37 @@ import axios from "axios";
 
 function InvasiveInsectsTab() {
   const [options, setOptions] = useState({
-    state: ["ALL"],
-    county: ["ALL"],
+    state: ["All"],
+    county: ["All"],
     dateInterval: ["Yearly"],
     startDate: ["1924-01-01"],
     endDate: ["2024-03-24"],
-    taxonLevel: ["ALL"],
-    taxon: ["ALL"],
+    taxonLevel: ["All"],
+    taxon: ["All"],
     dataType: ["inventory_change_value"],
     incomeCategory: ["All commodities"]
   });
 
-  const [data1, setData1] = useState(null);;
+  const [data1, setData1] = useState(null);
   // Mock data for right now 
-  const states = ["Florida", "Virginia"];
+  const [states, setStateNames] = useState(['All'])
+  const populateStates = async () => {
+    const starting = ["All"]
+    var stateQuery = `SELECT DISTINCT statename FROM "MIRANDABARNES".state ORDER BY statename`;
+    console.log(stateQuery);
+    axios
+    .get(`http://localhost:5001/?query=${encodeURIComponent(stateQuery)}`, {
+      crossdomain: true,
+    })
+    .then((response) => {for (let i in response.data) {
+      starting.push(response.data[i])
+    }})
+    setStateNames(starting);
+  };
   const counties = ["Alachua", "Montgomery"];
   const startDates = ["1924-01-01"];
   const endDates = ["2024-03-24"];
-  const dateIntervals = ["Monthly", "Yearly", "Every Five Years"];
+  const dateIntervals = ["Daily", "Monthly", "Yearly", "Every Five Years"];
   const taxonLevels = ["Order", "Family", "Genus"];
   const taxa = ["ALL", "Lepidoptera", "Diptera"];
   const dataTypes = ["inventory_change_value", "cash_receipt", "intermediate_product_expense"];
@@ -77,36 +90,42 @@ function InvasiveInsectsTab() {
 
   const generateGraph = async (options) => {
     //format the string
-    var timeformat = "YYYY-MM";
-    if (options.dateInterval === "Yearly") {
-      timeformat = "YYYY";
+    var timeformat = `observationdate, 'YYYY-MM-DD'`;
+    if (options.dateInterval === "Monthly") {
+      timeformat = `ROUND(observationdate, 'MONTH'), 'YYYY-MM'`;
+    }
+    else if (options.dateInterval === "Yearly") {
+      timeformat = `ROUND(observationdate, 'YEAR'), 'YYYY'`
+    }
+    else if (options.dateInterval === "Every Five Years") {
+      timeformat = `(ROUND(TO_NUMBER(TO_CHAR(observationdate, 'YYYY'))/5)) * 5`
     }
     var conditions = "";
-    if (options.state !== "ALL") {
+    if (options.state !== "All") {
       if (conditions.length === 0) {
       }
-      // conditions = `WHERE obsstate = '${options.state}'`;
+      conditions = `WHERE obsstate = '${options.state}'`;
     }
-    if (options.taxon !== "ALL") {
+    if (options.taxon !== "All") {
       if (conditions.length === 0) {
        // conditions = "WHERE ";
       }
       // conditions = `${conditions}ORDER = '${options.taxon}'`;
     }
-    var queryText1 = `WITH dates(yearMonth) AS (
-      SELECT to_char(observationdate,'${timeformat}') FROM "MIRANDABARNES".observation 
+    var queryText1 = `WITH dates(dateIntervals) AS (
+      SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
       WHERE observationdate >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
       AND observationdate <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
-      GROUP BY to_char(observationdate,'${timeformat}')
+      GROUP BY TO_CHAR(${timeformat})
   ),
-  observationlist(yearMonth) AS (
-      SELECT to_char(observationdate,'${timeformat}') FROM "MIRANDABARNES".observation obs
+  observationlist(dateIntervals) AS (
+      SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation obs
       INNER JOIN "MIRANDABARNES".insect ins ON obs.obsspecies = ins.species_name
       ${conditions}
   )
-  SELECT dates.yearMonth, COUNT(observationlist.yearMonth) FROM dates 
-  LEFT JOIN observationlist ON observationlist.yearMonth = dates.yearMonth 
-  GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
+  SELECT dates.dateIntervals, COUNT(observationlist.dateIntervals) FROM dates 
+  LEFT JOIN observationlist ON observationlist.dateIntervals = dates.dateIntervals
+  GROUP BY dates.dateIntervals ORDER BY dates.dateIntervals`;
     console.log(queryText1);
     axios
       .get(`http://localhost:5001/?query=${encodeURIComponent(queryText1)}`, {
@@ -138,6 +157,7 @@ function InvasiveInsectsTab() {
           Select State:
           <select name="state" value={options.state} onChange={handleChange}>
             <option value="">Select State</option>
+            {populateStates}
             {states.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -157,7 +177,7 @@ function InvasiveInsectsTab() {
         <label>
           Select Date Interval:
           <select name="dateInterval" value={options.dateInterval} onChange={handleChange}>
-            <option value="">Intervals</option>
+            <option value="">Pick Intervals</option>
             {dateIntervals.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
