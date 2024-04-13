@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const totaltupletext = 'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty)';
+const totaltupletext =
+  'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty)';
 
-async function totalTupleGetter(){
-  axios.get(`http://localhost:5001/?query=${encodeURIComponent(totaltupletext)}`,  { crossdomain: true }).then(response => {
+async function totalTupleGetter() {
+  axios
+    .get(`http://localhost:5001/?query=${encodeURIComponent(totaltupletext)}`, {
+      crossdomain: true,
+    })
+    .then((response) => {
       alert("Total Number of Tuples: " + response.data);
     });
 }
@@ -16,7 +21,7 @@ function OverviewPage() {
     switch (tab) {
       case "Severe Weather":
         setPreview(
-          "This page allows users to analyze storm data from 1950 to 2023 (grouped by either decade, year, or month),\n" +
+          "Severe Weather Summary: This page allows users to analyze storm data from 1950 to 2023 (grouped by either decade, year, or month),\n" +
             "and allow them to select the time interval, specific types weather events or all weather events, " +
             "as well as possible fatality types associated with those events." +
             " The data is then presented in 3 graphs: (1) Frequency of storm events with respect to time." +
@@ -43,23 +48,37 @@ function OverviewPage() {
   };
 
   return (
-    <div>
+    <div style={{ paddingLeft: "10%", paddingRight: "10%" }}>
       <h2>Welcome!</h2>
-      <p class="longtext"> Environmental issues such as climate change and invasive species introductions have had 
-        increasingly significant impacts not only on the natural world, but on the economy, politics, 
-        and human society. Understanding the extent to which communities are prepared to address 
-        existing risks brought about by these factors has become just as important as extrapolating
-        how these factors are likely to evolve in the years to come. This application is thus centered
-        on the general theme of “climate resilience”, an increasingly popular term encompassing the 
-        ability of different entities to adapt to modern environmental challenges. </p>
-      <p class="longtext"> Users are invited to explore five distinct dashboards examining severe weather, human health and temperature,
-      invasive species burdens on agriculture, property value and precipitation, and,
-      lastly, government spending. On each page, trends in these topics can be examined over time and plotted as curves on
-      different graphs. Users have the flexibility to select different geographic locations, taxa, agricultural commodities, causes of death, etc.
-      depending on the target graph, as well as to select different time scales to refine their questions.
-      Our intention is that the application prove valuable to policymakers who must assess where additional action needs to be targeted and which communities
-      may act as effective models when it comes to preserving the health and prosperity of citizens amidst climate and ecological disasters. 
+      <p className="longtext">
+        {" "}
+        Environmental issues such as climate change and invasive species
+        introductions have had increasingly significant impacts not only on the
+        natural world, but on the economy, politics, and human society.
+        Understanding the extent to which communities are prepared to address
+        existing risks brought about by these factors has become just as
+        important as extrapolating how these factors are likely to evolve in the
+        years to come. This application is thus centered on the general theme of
+        “climate resilience”, an increasingly popular term encompassing the
+        ability of different entities to adapt to modern environmental
+        challenges.{" "}
       </p>
+      <p className="longtext">
+        {" "}
+        Users are invited to explore five distinct dashboards examining severe
+        weather, human health and temperature, invasive species burdens on
+        agriculture, property value and precipitation, and, lastly, government
+        spending. On each page, trends in these topics can be examined over time
+        and plotted as curves on different graphs. Users have the flexibility to
+        select different geographic locations, taxa, agricultural commodities,
+        causes of death, etc. depending on the target graph, as well as to
+        select different time scales to refine their questions. Our intention is
+        that the application prove valuable to policymakers who must assess
+        where additional action needs to be targeted and which communities may
+        act as effective models when it comes to preserving the health and
+        prosperity of citizens amidst climate and ecological disasters.
+      </p>
+      <hr style={{ borderTop: "3px solid #bbb" }}></hr>
       <div>
         <button onClick={() => showPreview("Severe Weather")}>
           Severe Weather Preview/Summary
@@ -78,11 +97,20 @@ function OverviewPage() {
         </button>
       </div>
       {preview && <p>{preview}</p>}
-      <p class="longtext"> The data for this project has been derived from several publically available datasets
-        published by various agencies of the U.S. government, among other sources. More detail
-        on each source is provided on the dashboard pages into which they were incorporated. The total number of tuples
-        assimilated into the database can be obtained using the button below. </p>
-        <button onClick={() => totalTupleGetter()}> Fetch Total Number of Tuples</button>
+      <hr style={{ borderTop: "3px solid #bbb" }}></hr>
+      <p className="longtext">
+        {" "}
+        The data for this project has been derived from several publically
+        available datasets published by various agencies of the U.S. government,
+        among other sources. More detail on each source is provided on the
+        dashboard pages into which they were incorporated. The total number of
+        tuples assimilated into the database can be obtained using the button
+        below.{" "}
+      </p>
+      <button onClick={() => totalTupleGetter()}>
+        {" "}
+        Fetch Total Number of Tuples
+      </button>
     </div>
   );
 }

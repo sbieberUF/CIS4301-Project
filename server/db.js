@@ -3,7 +3,7 @@ require("dotenv").config();
 
 async function initDB() {
   const connection = OracleDB.getConnection({
-    username: process.env.USERNAME,
+    username: process.env.DBUSERNAME,
     password: process.env.PASSWORD,
     connectString: `${process.env.HOSTNAME}:${process.env.DBPORT}/${process.env.SID}`,
   });
