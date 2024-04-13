@@ -115,6 +115,9 @@ function InvasiveInsectsTab() {
       if (conditions.length === 0) {
       }
       conditions = `WHERE obsstate = '${options.state}'`;
+      if (options.county !== "All") {
+        conditions += ` AND obscounty = '${options.county}'`
+      }
     }
     if (options.taxon !== "All") {
       if (conditions.length === 0) {
