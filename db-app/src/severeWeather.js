@@ -12,7 +12,7 @@ import axios from "axios";
 
 function SevereWeatherTab() {
   const [options, setOptions] = useState({
-    stateCounty: "ALL",
+    stateCounty: [],
     stormEvent: "ALL",
     startDate: "1950-01-01",
     endDate: "2023-12-31",
@@ -77,15 +77,38 @@ function SevereWeatherTab() {
         setStates(dataParsed);
       });
   }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const removeSelectedItem = (value) => {
     setOptions((prevState) => ({
       ...prevState,
-      [name]: value,
+      stateCounty: options.stateCounty.filter((item) => item !== value),
     }));
   };
-
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "stateCounty") {
+      if (value === "-----------" || options.stateCounty.includes(value)) {
+        return;
+      }
+      if (value === "ALL") {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      var arr = options.stateCounty;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else {
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
   const getRandomColor = () => {
     return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
   };
@@ -120,14 +143,22 @@ function SevereWeatherTab() {
       timeformat = "YYYY";
     }
     var conditions = "";
-    if (options.stateCounty !== "ALL") {
-      conditions = `WHERE st.SNAME = '${options.stateCounty}'`;
+    if (options.stateCounty.length !== 0) {
+      for (let i in options.stateCounty) {
+        if (i > 0) {
+          conditions = `${conditions} OR st.SNAME = '${options.stateCounty[i]}'`;
+        } else {
+          conditions = `st.SNAME = '${options.stateCounty[i]}'`;
+        }
+      }
+      conditions = `WHERE (${conditions})`;
     }
     if (options.stormEvent !== "ALL") {
       if (conditions.length === 0) {
-        conditions = "WHERE ";
+        conditions = `WHERE EVENT_TYPE = '${options.stormEvent}'`;
+      } else {
+        conditions = `${conditions} AND EVENT_TYPE = '${options.stormEvent}'`;
       }
-      conditions = `${conditions}EVENT_TYPE = '${options.stormEvent}'`;
     }
     const queryText1 = `WITH dates(yearMonth) AS (
       SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
@@ -150,16 +181,13 @@ function SevereWeatherTab() {
         crossdomain: true,
       })
       .then((response) => {
-        console.log(response.data);
-        // Logic for generating the graph based on selected data
-        console.log("Generating graph...");
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
         for (let i in response.data) {
           dataParsed.push({
             date: response.data[i][0],
-            eventFrequency: response.data[i][1],
+            total: response.data[i][1],
           });
         }
         setData1(dataParsed);
@@ -199,16 +227,13 @@ function SevereWeatherTab() {
         crossdomain: true,
       })
       .then((response) => {
-        console.log(response.data);
-        // Logic for generating the graph based on selected data
-        console.log("Generating graph...");
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
         for (let i in response.data) {
           dataParsed.push({
             date: response.data[i][0],
-            DeathFrequency: response.data[i][1],
+            total: response.data[i][1],
           });
         }
         setData2(dataParsed);
@@ -237,16 +262,13 @@ function SevereWeatherTab() {
         crossdomain: true,
       })
       .then((response) => {
-        console.log(response.data);
-        // Logic for generating the graph based on selected data
-        console.log("Generating graph...");
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
         for (let i in response.data) {
           dataParsed.push({
             date: response.data[i][0],
-            AverageAge: response.data[i][1],
+            total: response.data[i][1],
           });
         }
         setData3(dataParsed);
@@ -277,16 +299,38 @@ function SevereWeatherTab() {
           Select State:
           <select
             name="stateCounty"
-            value={options.stateCounty}
+            value={
+              options.stateCounty.length === 0
+                ? "All States (default)"
+                : `Selected ${options.stateCounty.length}`
+            }
             onChange={handleChange}
           >
-            {states.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            <option>
+              {options.stateCounty.length === 0
+                ? "All States (default)"
+                : `Selected ${options.stateCounty.length}`}
+            </option>
+            <option value={"-----------"}>{"-----------"}</option>
+            {states
+              .filter((item, idx) => !options.stateCounty.includes(item[0]))
+              .map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
           </select>
         </label>
+        <br />
+        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+          {options.stateCounty.map((item, idx) => (
+            <div key={idx} style={{ display: "inline-block" }}>
+              <button
+                onClick={() => removeSelectedItem(item)}
+              >{`${item} x`}</button>
+            </div>
+          ))}
+        </div>
         <br />
         <label>
           <u>Select Date Range</u>
