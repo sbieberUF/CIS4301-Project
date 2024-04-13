@@ -29,9 +29,13 @@ function SevereWeatherTab() {
   //fix these two
   const [eventTypes, setEventTypes] = useState(["ALL"]);
   const [states, setStates] = useState(["ALL"]);
+
+  const resolution = ["By Year", "By Month"];
+  const fatalityType = ["ALL", "D", "I"];
+  const sex = ["ALL", "M", "F", "UNKNOWN"];
   //loading data into the displays
   if (eventTypes.length === 1) {
-    setEventTypes(["Loading", "..."]);
+    setEventTypes(["Loading...", "..."]);
     axios
       .get(
         `http://localhost:5001/?query=${encodeURIComponent(
@@ -44,7 +48,7 @@ function SevereWeatherTab() {
       .then((response) => {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
-        var dataParsed = ["All"];
+        var dataParsed = ["ALL"];
         for (let i in response.data) {
           dataParsed.push(response.data[i]);
         }
@@ -52,7 +56,7 @@ function SevereWeatherTab() {
       });
   }
   if (states.length === 1) {
-    setStates(["Loading", "..."]);
+    setStates(["Loading...", "..."]);
     axios
       .get(
         `http://localhost:5001/?query=${encodeURIComponent(
@@ -65,7 +69,7 @@ function SevereWeatherTab() {
       .then((response) => {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
-        var dataParsed = ["All"];
+        var dataParsed = ["ALL"];
         for (let i in response.data) {
           dataParsed.push(response.data[i]);
         }
@@ -73,10 +77,6 @@ function SevereWeatherTab() {
         setStates(dataParsed);
       });
   }
-
-  const resolution = ["By Year", "By Month"];
-  const fatalityType = ["ALL", "D", "I"];
-  const sex = ["ALL", "M", "F", "UNKNOWN"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
