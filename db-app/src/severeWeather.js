@@ -13,7 +13,7 @@ import axios from "axios";
 function SevereWeatherTab() {
   const [options, setOptions] = useState({
     stateCounty: [],
-    stormEvent: "ALL",
+    stormEvent: [],
     startDate: "1950-01-01",
     endDate: "2023-12-31",
     resolution: "By Year",
@@ -77,16 +77,19 @@ function SevereWeatherTab() {
         setStates(dataParsed);
       });
   }
-  const removeSelectedItem = (value) => {
+  const removeSelectedItem = (nm, value) => {
     setOptions((prevState) => ({
       ...prevState,
-      stateCounty: options.stateCounty.filter((item) => item !== value),
+      [nm]: options[nm].filter((item) => item !== value),
     }));
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (value === "-----------") {
+      return;
+    }
     if (name === "stateCounty") {
-      if (value === "-----------" || options.stateCounty.includes(value)) {
+      if (options.stateCounty.includes(value)) {
         return;
       }
       if (value === "ALL") {
@@ -97,6 +100,23 @@ function SevereWeatherTab() {
         return;
       }
       var arr = options.stateCounty;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "stormEvent") {
+      if (options.stormEvent.includes(value)) {
+        return;
+      }
+      if (value === "ALL") {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.stormEvent;
       arr.push(value);
       setOptions((prevState) => ({
         ...prevState,
@@ -153,11 +173,19 @@ function SevereWeatherTab() {
       }
       conditions = `WHERE (${conditions})`;
     }
-    if (options.stormEvent !== "ALL") {
+    if (options.stormEvent.length !== 0) {
+      let eventCondition = "";
+      for (let i in options.stormEvent) {
+        if (i == 0) {
+          eventCondition = `${eventCondition} EVENT_TYPE = '${options.stormEvent[i]}'`;
+        } else {
+          eventCondition = `${eventCondition} OR EVENT_TYPE = '${options.stormEvent[i]}'`;
+        }
+      }
       if (conditions.length === 0) {
-        conditions = `WHERE EVENT_TYPE = '${options.stormEvent}'`;
+        conditions = `WHERE (${eventCondition})`;
       } else {
-        conditions = `${conditions} AND EVENT_TYPE = '${options.stormEvent}'`;
+        conditions = `${conditions} AND (${eventCondition})`;
       }
     }
     const queryText1 = `WITH dates(yearMonth) AS (
@@ -250,13 +278,14 @@ function SevereWeatherTab() {
           INNER JOIN "JASON.LI1".STORM_LOC sl ON se.EVENT_ID = sl.EVENT_ID
           INNER JOIN "JASON.LI1".STATES st ON st.FIPS = sl.STATE_FIPS
           ${conditions}
-      ), deathList (yearMonth, age) AS
-      (SELECT el.yearMonth, sf.age FROM EVENTLIST el INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
-      WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
+      ), deathList (yearMonth, age) AS (
+          SELECT el.yearMonth, sf.age FROM EVENTLIST el 
+          INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
+          WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
       SELECT dates.yearMonth, COALESCE(ROUND(AVG(deathList.age),2), 0) FROM dates 
       LEFT JOIN deathList ON deathList.yearMonth = dates.yearMonth 
       GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
-    console.log(queryText2);
+    console.log(queryText3);
     axios
       .get(`http://localhost:5001/?query=${encodeURIComponent(queryText3)}`, {
         crossdomain: true,
@@ -284,17 +313,37 @@ function SevereWeatherTab() {
           Select Event Type:
           <select
             name="stormEvent"
-            value={options.stormEvent}
+            value={
+              options.stormEvent.length === 0
+                ? "All Events (default)"
+                : `Selected ${options.stormEvent.length}`
+            }
             onChange={handleChange}
           >
-            {eventTypes.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            <option>
+              {options.stormEvent.length === 0
+                ? "All Events (default)"
+                : `Selected ${options.stormEvent.length}`}
+            </option>
+            <option value={"-----------"}>{"-----------"}</option>
+            {eventTypes
+              .filter((item, idx) => !options.stormEvent.includes(item[0]))
+              .map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
           </select>
         </label>
-        <br />
+        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+          {options.stormEvent.map((item, idx) => (
+            <div key={idx} style={{ display: "inline-block" }}>
+              <button
+                onClick={() => removeSelectedItem("stormEvent", item)}
+              >{`${item} x`}</button>
+            </div>
+          ))}
+        </div>
         <label>
           Select State:
           <select
@@ -321,17 +370,15 @@ function SevereWeatherTab() {
               ))}
           </select>
         </label>
-        <br />
         <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
           {options.stateCounty.map((item, idx) => (
             <div key={idx} style={{ display: "inline-block" }}>
               <button
-                onClick={() => removeSelectedItem(item)}
+                onClick={() => removeSelectedItem("stateCounty", item)}
               >{`${item} x`}</button>
             </div>
           ))}
         </div>
-        <br />
         <label>
           <u>Select Date Range</u>
         </label>
