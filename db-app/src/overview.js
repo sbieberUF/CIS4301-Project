@@ -21,7 +21,7 @@ function OverviewPage() {
     switch (tab) {
       case "Severe Weather":
         setPreview(
-          "This page allows users to analyze storm data from 1950 to 2023 (grouped by either decade, year, or month),\n" +
+          "Severe Weather Summary: This page allows users to analyze storm data from 1950 to 2023 (grouped by either decade, year, or month),\n" +
             "and allow them to select the time interval, specific types weather events or all weather events, " +
             "as well as possible fatality types associated with those events." +
             " The data is then presented in 3 graphs: (1) Frequency of storm events with respect to time." +
@@ -50,7 +50,7 @@ function OverviewPage() {
   return (
     <div style={{ paddingLeft: "10%", paddingRight: "10%" }}>
       <h2>Welcome!</h2>
-      <p class="longtext">
+      <p className="longtext">
         {" "}
         Environmental issues such as climate change and invasive species
         introductions have had increasingly significant impacts not only on the
@@ -63,7 +63,7 @@ function OverviewPage() {
         ability of different entities to adapt to modern environmental
         challenges.{" "}
       </p>
-      <p class="longtext">
+      <p className="longtext">
         {" "}
         Users are invited to explore five distinct dashboards examining severe
         weather, human health and temperature, invasive species burdens on
@@ -78,6 +78,7 @@ function OverviewPage() {
         act as effective models when it comes to preserving the health and
         prosperity of citizens amidst climate and ecological disasters.
       </p>
+      <hr style={{ borderTop: "3px solid #bbb" }}></hr>
       <div>
         <button onClick={() => showPreview("Severe Weather")}>
           Severe Weather Preview/Summary
@@ -97,7 +98,7 @@ function OverviewPage() {
       </div>
       {preview && <p>{preview}</p>}
       <hr style={{ borderTop: "3px solid #bbb" }}></hr>
-      <p class="longtext">
+      <p className="longtext">
         {" "}
         The data for this project has been derived from several publically
         available datasets published by various agencies of the U.S. government,

@@ -66,6 +66,7 @@ function SevereWeatherTab() {
           type="monotone"
           stroke={getRandomColor()}
           dataKey={key}
+          dot={false}
         />
       );
     });
