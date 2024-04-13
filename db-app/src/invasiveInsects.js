@@ -12,13 +12,14 @@ import axios from "axios";
 
 function InvasiveInsectsTab() {
   const [options, setOptions] = useState({
-    state: ["All"],
-    county: ["All"],
+    state: ['All'],
+    county: ['All'],
     dateInterval: ["Yearly"],
     startDate: ["1924-01-01"],
     endDate: ["2024-03-24"],
-    taxonLevel: ["All"],
-    taxon: ["All"],
+    order: ["All"],
+    family: ["All"],
+    genus: ["All"],
     dataType: ["inventory_change_value"],
     incomeCategory: ["All commodities"]
   });
@@ -26,7 +27,7 @@ function InvasiveInsectsTab() {
   const [data1, setData1] = useState(null);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
-  const [counties, setCounties] = useState(["All"]);
+  const [counties, setCounties] = useState(['All']);
   const populateCounties= async () => {
     var startingCounties = ['All'];
     if (options.state !== "All") {
@@ -49,11 +50,23 @@ function InvasiveInsectsTab() {
       setCounties(startingCounties);
   })}
   else {setCounties(['All'])}};
-  const startDates = ["1924-01-01"];
-  const endDates = ["2024-03-24"];
   const dateIntervals = ["Daily", "Monthly", "Yearly", "Every Five Years"];
-  const taxonLevels = ["Order", "Family", "Genus"];
-  const taxa = ["ALL", "Lepidoptera", "Diptera"];
+  const orders = [
+    "Blattodea",
+    "Coleoptera",
+    "Dermaptera",
+    "Diptera",
+    "Ephemeroptera",
+    "Hemiptera",
+    "Hymenoptera",
+    "Lepidoptera",
+    "Mantodea",
+    "Odonata",
+    "Orthoptera",
+    "Siphonaptera",
+    "Thysanoptera",
+];
+  const families = ["All"];
   const dataTypes = ["inventory_change_value", "cash_receipt", "intermediate_product_expense"];
   const incomeCategories = ["All crops", "Animals and products", "All commodities"];
   
@@ -110,20 +123,22 @@ function InvasiveInsectsTab() {
     else if (options.dateInterval === "Every Five Years") {
       timeformat = `(ROUND(TO_NUMBER(TO_CHAR(observationdate, 'YYYY'))/5)) * 5`
     }
-    var conditions = "";
-    if (options.state !== "All") {
+    var conditions = "WHERE origin = 'invasive'";
+    if (options.state !== 'All') {
       if (conditions.length === 0) {
       }
       conditions = `WHERE obsstate = '${options.state}'`;
-      if (options.county !== "All") {
+      if (options.county !== 'All') {
         conditions += ` AND obscounty = '${options.county}'`
       }
     }
-    if (options.taxon !== "All") {
+    if (options.order !== 'All') {
       if (conditions.length === 0) {
-       // conditions = "WHERE ";
+        conditions = `WHERE insect_order = '${options.order}'`;
       }
-      // conditions = `${conditions}ORDER = '${options.taxon}'`;
+      else {
+        conditions += ` AND insect_order = '${options.order}'`;
+      }
     }
     var queryText1 = `WITH dates(dateIntervals) AS (
       SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
@@ -197,23 +212,27 @@ function InvasiveInsectsTab() {
         </label>
         <br />
         <label>
-          Select Start Date:
-          <select name="startDate" value={options.startDate} onChange={handleChange}>
-            <option value="">Start Date</option>
-            {startDates.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select End Date:
-          <select name="endDate" value={options.endDate} onChange={handleChange}>
-            <option value="">End Date</option>
-            {endDates.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          Start Date:
+          <input
+            type="date"
+            id="startDate"
+            name="startDate"
+            value={options.startDate}
+            onChange={handleChange}
+            min="1950-01-01"
+            max="2023-12-31"
+          />
+          <br />
+          End Date:
+          <input
+            type="date"
+            id="endDate"
+            name="endDate"
+            value={options.endDate}
+            onChange={handleChange}
+            min="1950-01-01"
+            max="2023-12-31"
+          />
         </label>
       </div>
       <div>
@@ -241,20 +260,20 @@ function InvasiveInsectsTab() {
       <div>
         <h3>Insect Observations</h3>
         <label>
-          Select Taxon Level:
-          <select name="taxonLevel" value={options.taxonLevel} onChange={handleChange}>
-            <option value="">Select Taxon Level</option>
-            {taxonLevels.map((option) => (
+          Select Order:
+          <select name="order" value={options.order} onChange={handleChange}>
+            <option value="">Select Order</option>
+            {orders.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
         </label>
         <br />
         <label>
-          Select Taxa:
-          <select name="taxa" value={options.taxa} onChange={handleChange}>
+          Select Family:
+          <select name="family" value={options.family} onChange={handleChange}>
             <option value="">Select Taxa</option>
-            {taxa.map((option) => (
+            {families.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
