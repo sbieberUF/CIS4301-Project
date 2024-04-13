@@ -213,6 +213,44 @@ function SevereWeatherTab() {
         }
         setData2(dataParsed);
       });
+    //Query 3: average age of deaths
+    const queryText3 = `WITH dates(yearMonth) AS (
+        SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
+        WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
+        AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
+        GROUP BY to_char(BEGIN_DATE_TIME,'${timeformat}')
+      ),
+      eventList(yearMonth, event_id) AS (
+          SELECT to_char(BEGIN_DATE_TIME,'${timeformat}'), se.EVENT_ID FROM "JASON.LI1".STORM_EVENT se
+          INNER JOIN "JASON.LI1".STORM_LOC sl ON se.EVENT_ID = sl.EVENT_ID
+          INNER JOIN "JASON.LI1".STATES st ON st.FIPS = sl.STATE_FIPS
+          ${conditions}
+      ), deathList (yearMonth, age) AS
+      (SELECT el.yearMonth, sf.age FROM EVENTLIST el INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
+      WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
+      SELECT dates.yearMonth, COALESCE(ROUND(AVG(deathList.age),2), 0) FROM dates 
+      LEFT JOIN deathList ON deathList.yearMonth = dates.yearMonth 
+      GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
+    console.log(queryText2);
+    axios
+      .get(`http://localhost:5001/?query=${encodeURIComponent(queryText3)}`, {
+        crossdomain: true,
+      })
+      .then((response) => {
+        console.log(response.data);
+        // Logic for generating the graph based on selected data
+        console.log("Generating graph...");
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = [];
+        for (let i in response.data) {
+          dataParsed.push({
+            date: response.data[i][0],
+            AverageAge: response.data[i][1],
+          });
+        }
+        setData3(dataParsed);
+      });
   };
 
   return (
@@ -361,79 +399,97 @@ function SevereWeatherTab() {
         Generate Graphs
       </button>
       {data1 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data1}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis domain={["dataMin", "dataMax"]} />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data1)}
-        </LineChart>
+        <div style={{ alignContent: "center" }}>
+          <h2>Storm Event Frequency Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data1}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis domain={["dataMin", "dataMax"]} />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data1)}
+            </LineChart>
+          </div>
+        </div>
       )}
       {data2 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data2}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data2)}
-        </LineChart>
+        <div style={{ alignContent: "center" }}>
+          <h2>Storm Event Fatalities Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data2}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data2)}
+            </LineChart>
+          </div>
+        </div>
       )}
       {data3 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data3}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data3)}
-        </LineChart>
+        <div style={{ alignContent: "center" }}>
+          <h2>Average Age of Fatalities Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data3}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data3)}
+            </LineChart>
+          </div>
+        </div>
       )}
     </div>
   );
