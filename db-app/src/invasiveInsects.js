@@ -25,20 +25,7 @@ function InvasiveInsectsTab() {
 
   const [data1, setData1] = useState(null);
   // Mock data for right now 
-  const [states, setStateNames] = useState(['All'])
-  const populateStates = async () => {
-    const starting = ["All"]
-    var stateQuery = `SELECT DISTINCT statename FROM "MIRANDABARNES".state ORDER BY statename`;
-    console.log(stateQuery);
-    axios
-    .get(`http://localhost:5001/?query=${encodeURIComponent(stateQuery)}`, {
-      crossdomain: true,
-    })
-    .then((response) => {for (let i in response.data) {
-      starting.push(response.data[i])
-    }})
-    setStateNames(starting);
-  };
+  const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
   const counties = ["Alachua", "Montgomery"];
   const startDates = ["1924-01-01"];
   const endDates = ["2024-03-24"];
@@ -157,7 +144,6 @@ function InvasiveInsectsTab() {
           Select State:
           <select name="state" value={options.state} onChange={handleChange}>
             <option value="">Select State</option>
-            {populateStates}
             {states.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
