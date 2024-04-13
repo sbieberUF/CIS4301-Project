@@ -19,22 +19,67 @@ function SevereWeatherTab() {
     resolution: "By Year",
     minAge: 0,
     maxAge: 103,
-    sex: "ALL",
     fatalityType: "ALL",
+    sex: "ALL",
   });
   const [data1, setData1] = useState(null);
+  const [data2, setData2] = useState(null);
+  const [data3, setData3] = useState(null);
   // Mock data for right now
   //fix these two
-  const eventTypes = ["ALL", "Thunderstorm Wind", "Hail"];
-  const states = ["ALL", "State1", "State2", "State3"];
+  const [eventTypes, setEventTypes] = useState(["ALL"]);
+  const [states, setStates] = useState(["ALL"]);
+  //loading data into the displays
+  if (eventTypes.length === 1) {
+    setEventTypes(["Loading", "..."]);
+    axios
+      .get(
+        `http://localhost:5001/?query=${encodeURIComponent(
+          'select EVENT_TYPE FROM "JASON.LI1".STORM_EVENT GROUP BY EVENT_TYPE ORDER BY EVENT_TYPE'
+        )}`,
+        {
+          crossdomain: true,
+        }
+      )
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = ["All"];
+        for (let i in response.data) {
+          dataParsed.push(response.data[i]);
+        }
+        setEventTypes(dataParsed);
+      });
+  }
+  if (states.length === 1) {
+    setStates(["Loading", "..."]);
+    axios
+      .get(
+        `http://localhost:5001/?query=${encodeURIComponent(
+          'SELECT SNAME FROM "JASON.LI1".STATES'
+        )}`,
+        {
+          crossdomain: true,
+        }
+      )
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = ["All"];
+        for (let i in response.data) {
+          dataParsed.push(response.data[i]);
+        }
+
+        setStates(dataParsed);
+      });
+  }
 
   const resolution = ["By Year", "By Month"];
-  const sex = ["ALL", "M", "F"];
   const fatalityType = ["ALL", "D", "I"];
+  const sex = ["ALL", "M", "F", "UNKNOWN"];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(options);
     setOptions((prevState) => ({
       ...prevState,
       [name]: value,
@@ -42,13 +87,11 @@ function SevereWeatherTab() {
   };
 
   const getRandomColor = () => {
-    return (
-      "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0")
-    );
+    return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
   };
   //generate the individual lines
-  const lines = () => {
-    const entries = data1.map((option) => {
+  const lines = (dat) => {
+    const entries = dat.map((option) => {
       const keys = Object.keys(option);
       return keys;
     });
@@ -59,7 +102,6 @@ function SevereWeatherTab() {
     const filtered = flattened.filter((key) => key !== "date");
     const uniqueKeys = [...new Set(filtered)];
     return uniqueKeys.map((key) => {
-      console.log(key);
       return (
         <Line
           name={key}
@@ -79,8 +121,6 @@ function SevereWeatherTab() {
     }
     var conditions = "";
     if (options.stateCounty !== "ALL") {
-      if (conditions.length === 0) {
-      }
       conditions = `WHERE st.SNAME = '${options.stateCounty}'`;
     }
     if (options.stormEvent !== "ALL") {
@@ -89,7 +129,7 @@ function SevereWeatherTab() {
       }
       conditions = `${conditions}EVENT_TYPE = '${options.stormEvent}'`;
     }
-    var queryText1 = `WITH dates(yearMonth) AS (
+    const queryText1 = `WITH dates(yearMonth) AS (
       SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
       WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
       AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
@@ -123,6 +163,55 @@ function SevereWeatherTab() {
           });
         }
         setData1(dataParsed);
+      });
+    //do similar for data 2 and data 3;
+    var ftypeANDgender = "";
+    if (options.fatalityType !== "ALL") {
+      ftypeANDgender = `AND sf.FTYPE = '${options.fatalityType}'`;
+    }
+    if (options.sex !== "ALL") {
+      if (options.sex === "UNKNOWN") {
+        ftypeANDgender = `${ftypeANDgender} AND sf.SEX IS NULL`;
+      } else {
+        ftypeANDgender = `${ftypeANDgender} AND sf.SEX = '${options.sex}'`;
+      }
+    }
+    const queryText2 = `WITH dates(yearMonth) AS (
+      SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
+      WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
+      AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
+      GROUP BY to_char(BEGIN_DATE_TIME,'${timeformat}')
+  ),
+  eventList(yearMonth, event_id) AS (
+      SELECT to_char(BEGIN_DATE_TIME,'${timeformat}'), se.EVENT_ID FROM "JASON.LI1".STORM_EVENT se
+      INNER JOIN "JASON.LI1".STORM_LOC sl ON se.EVENT_ID = sl.EVENT_ID
+      INNER JOIN "JASON.LI1".STATES st ON st.FIPS = sl.STATE_FIPS
+      ${conditions}
+  ), deathList (yearMonth) AS
+  (SELECT el.yearMonth FROM EVENTLIST el INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
+  WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
+  SELECT dates.yearMonth, COUNT(deathList.yearMonth) FROM dates 
+  LEFT JOIN deathList ON deathList.yearMonth = dates.yearMonth 
+  GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
+    console.log(queryText2);
+    axios
+      .get(`http://localhost:5001/?query=${encodeURIComponent(queryText2)}`, {
+        crossdomain: true,
+      })
+      .then((response) => {
+        console.log(response.data);
+        // Logic for generating the graph based on selected data
+        console.log("Generating graph...");
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = [];
+        for (let i in response.data) {
+          dataParsed.push({
+            date: response.data[i][0],
+            DeathFrequency: response.data[i][1],
+          });
+        }
+        setData2(dataParsed);
       });
   };
 
@@ -236,17 +325,6 @@ function SevereWeatherTab() {
         </label>
         <br />
         <label>
-          Sex:
-          <select name="sex" value={options.sex} onChange={handleChange}>
-            {sex.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
           Fatality Type: {"(D) = Direct; (I) = Indirect"}
           <br />
           <select
@@ -255,6 +333,18 @@ function SevereWeatherTab() {
             onChange={handleChange}
           >
             {fatalityType.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <br />
+        <label>
+          Gender
+          <br />
+          <select name="sex" value={options.sex} onChange={handleChange}>
+            {sex.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -292,14 +382,14 @@ function SevereWeatherTab() {
             align="right"
             height={36}
           />
-          {lines()}
+          {lines(data1)}
         </LineChart>
       )}
-      {data1 && (
+      {data2 && (
         <LineChart
           width={500}
           height={400}
-          data={data1}
+          data={data2}
           margin={{
             top: 20,
             right: 20,
@@ -317,7 +407,32 @@ function SevereWeatherTab() {
             align="right"
             height={36}
           />
-          {lines()}
+          {lines(data2)}
+        </LineChart>
+      )}
+      {data3 && (
+        <LineChart
+          width={500}
+          height={400}
+          data={data3}
+          margin={{
+            top: 20,
+            right: 20,
+            bottom: 20,
+            left: 20,
+          }}
+        >
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend
+            layout="vertical"
+            verticalAlign="top"
+            align="right"
+            height={36}
+          />
+          {lines(data3)}
         </LineChart>
       )}
     </div>
