@@ -26,7 +26,29 @@ function InvasiveInsectsTab() {
   const [data1, setData1] = useState(null);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
-  const counties = ["Alachua", "Montgomery"];
+  const [counties, setCounties] = useState(["All"]);
+  const populateCounties= async () => {
+    var startingCounties = ['All'];
+    if (options.state !== "All") {
+    var countyQuery = `SELECT DISTINCT obscounty FROM "MIRANDABARNES".counties
+    WHERE obsstate = '${options.state}'
+    ORDER BY obscounty`;
+    axios
+    .get(`http://localhost:5001/?query=${encodeURIComponent(countyQuery)}`, {
+      crossdomain: true,
+    })
+    .then((response) => {
+      console.log(response.data);
+      // Logic for generating the graph based on selected data
+      console.log("Generating graph...");
+      //fetch data with the custom query and format it like the below
+      //must be ordered by date, since dates cannot be sorted by recharts
+      for (let i in response.data) {
+        startingCounties.push(response.data[i]);
+      }
+      setCounties(startingCounties);
+  })}
+  else {setCounties(['All'])}};
   const startDates = ["1924-01-01"];
   const endDates = ["2024-03-24"];
   const dateIntervals = ["Daily", "Monthly", "Yearly", "Every Five Years"];
@@ -43,6 +65,7 @@ function InvasiveInsectsTab() {
       [name]: value,
     }));
   };
+
   
   const getRandomColor = () => {
     return (
@@ -142,7 +165,7 @@ function InvasiveInsectsTab() {
         <h3>General</h3>
         <label>
           Select State:
-          <select name="state" value={options.state} onChange={handleChange}>
+          <select name="state" value={options.state} onBlur={populateCounties} onChange={handleChange}>
             <option value="">Select State</option>
             {states.map((option) => (
               <option key={option} value={option}>{option}</option>
