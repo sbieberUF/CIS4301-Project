@@ -235,59 +235,98 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
 
   return (
     <><div>
+      <div style={{ display: "block", paddingBottom: "50px", width: "25%", height: "550px", marginTop: "20px"}}>
       <h2>Select Criteria</h2>
       <div style={{ textAlign: "center" }}>
         <div>
           <h3>General</h3>
           <label>
             Select State:
-            <select multiple value={selectedStates} onChange={handleStateChange}>
+            <select size="1" value={selectedStates} onChange={handleStateChange}>
+            <option value="">Select State</option>
               {states.map((state) => (
                 <option key={state} value={state}>
                   {state}
                 </option>
               ))}
             </select>
+            {selectedStates.length > 0 && (
+            <div>
+              Selected States: {selectedStates.map((state) => (
+                <span key={state} onClick={() => setSelectedStates(selectedStates.filter((selectedState) => selectedState !== state))}>
+                  {state} &#x2716;
+                </span>
+              ))}
+            </div>
+          )}
           </label>
           <br />
           <label>
             Select County:
-            <select multiple value={selectedCounties} onChange={handleCountyChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedCounties} onChange={handleCountyChange}>
+            <option disabled={selectedCounties.length > 0} value="ALL">All Counties (Default) </option>
               {counties.map((county) => (
                 <option key={county} value={county}>
                   {county}
                 </option>
               ))}
             </select>
+            {selectedCounties.length > 0 && (
+            <div>
+              Selected Counties: {selectedCounties.map((county) => (
+                <span key={county} onClick={() => setSelectedCounties(selectedCounties.filter((selectedCounty) => selectedCounty !== county))}>
+                  {county} &#x2716;
+                </span>
+              ))}
+            </div>
+          )}
           </label>
           <br />
           <label>
             Select Year:
-            <select multiple value={selectedYears} onChange={handleYearChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedYears} onChange={handleYearChange}>
+            <option disabled={selectedYears.length > 0} value="ALL">All Years (Default) </option>
               {years.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
               ))}
             </select>
+            {selectedYears.length > 0 && (
+            <div>
+              Selected Years: {selectedYears.map((year) => (
+                <span key={year} onClick={() => setSelectedYears(selectedYears.filter((selectedYear) => selectedYear !== year))}>
+                  {year} &#x2716;
+                </span>
+              ))}
+            </div>
+            )}
           </label>
           <br />
           <br />
           <label>
             Select Age Group:
-            <select multiple value={selectedAgeGroups} onChange={handleAgeGroupChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedAgeGroups} onChange={handleAgeGroupChange}>
+              <option disabled={selectedAgeGroups.length > 0} value="ALL">All Age Groups (Default) </option>
               {ageGroups.map((ageGroup) => (
                 <option key={ageGroup} value={ageGroup}>
                   {ageGroup}
                 </option>
               ))}
             </select>
+            {selectedAgeGroups.length > 0 && (
+            <div>
+              Selected Age Groups: {selectedAgeGroups.map((ageGroup) => (
+                <span key={ageGroup} onClick={() => setSelectedAgeGroups(selectedAgeGroups.filter((selectedAgeGroup) => selectedAgeGroup !== ageGroup))}>
+                  {ageGroup} &#x2716;
+                </span>
+              ))}
+            </div>
+            )}
           </label>
           <br />
           <button onClick={handleDisplayData}>Display Data</button>
+        </div>
         </div>
 
         <h3>Temperature Data</h3>
@@ -353,40 +392,36 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
         </table>
       </div>
       
-      <div className="graphs" style={{ display: "inline-block", width: "70%", height: "550px", overflowY: "scroll" }}>
-      {temperatureData.length > 0 && (
-        <div style={{ alignContent: "center" }}>
-          <h2>Average Temperature By State And County Over Time</h2>
-          <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart width={800} height={400} data={temperatureData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip />
-              <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
-              {lines(temperatureData)}
-            </LineChart>
-          </div>
-        </div>
-      )}
-      {mortalityData.length > 0 && (
-        <div style={{ alignContent: "center" }}>
-          <h2>Mortality Rates By State And County Over Time</h2>
-          <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart width={800} height={400} data={mortalityData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip />
-              <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
-              {lines(mortalityData)}
-            </LineChart>
-          </div>
-        </div>
-      )}
-    </div>
+      <div className="graphs" style={{ display: "inline-block", height: "600px", overflowY: "scroll", marginLeft: "300px", marginTop: '-500px' }}>
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+    {temperatureData.length > 0 && (
+      <div style={{ marginBottom: "20px" }}>
+        <h2>Average Temperature Over Time</h2>
+        <LineChart width={800} height={400} data={temperatureData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+          {lines(temperatureData)}
+        </LineChart>
+      </div>
+    )}
+    {mortalityData.length > 0 && (
+      <div>
+        <h2>Mortality Rate Over Time</h2>
+        <LineChart width={800} height={400} data={mortalityData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+          {lines(mortalityData)}
+        </LineChart>
+      </div>
+    )}
+  </div>
+</div>
             </div> </>
           );
         }
