@@ -308,7 +308,12 @@ function SevereWeatherTab() {
     <div style={{ display: "block", paddingBottom: "50px" }}>
       <fieldset
         className="settings"
-        style={{ display: "inline-block", width: "25%", height: "auto" }}
+        style={{
+          display: "inline-block",
+          width: "25%",
+          height: "550px",
+          overflowY: "scroll",
+        }}
       >
         <legend>Select Criteria</legend>
         <div>
@@ -499,8 +504,8 @@ function SevereWeatherTab() {
         style={{
           display: "inline-block",
           width: "70%",
-          height: "600px",
-          overflowX: "scroll",
+          height: "550px",
+          overflowY: "scroll",
         }}
       >
         {data1 && (
