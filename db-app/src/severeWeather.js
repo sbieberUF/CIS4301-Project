@@ -12,43 +12,129 @@ import axios from "axios";
 
 function SevereWeatherTab() {
   const [options, setOptions] = useState({
-    stateCounty: "ALL",
-    stormEvent: "ALL",
+    stateCounty: [],
+    stormEvent: [],
     startDate: "1950-01-01",
     endDate: "2023-12-31",
     resolution: "By Year",
     minAge: 0,
     maxAge: 103,
-    sex: "ALL",
     fatalityType: "ALL",
+    sex: "ALL",
   });
   const [data1, setData1] = useState(null);
+  const [data2, setData2] = useState(null);
+  const [data3, setData3] = useState(null);
   // Mock data for right now
   //fix these two
-  const eventTypes = ["ALL", "Thunderstorm Wind", "Hail"];
-  const states = ["ALL", "State1", "State2", "State3"];
+  const [eventTypes, setEventTypes] = useState(["ALL"]);
+  const [states, setStates] = useState(["ALL"]);
 
   const resolution = ["By Year", "By Month"];
-  const sex = ["ALL", "M", "F"];
   const fatalityType = ["ALL", "D", "I"];
+  const sex = ["ALL", "M", "F", "UNKNOWN"];
+  //loading data into the displays
+  if (eventTypes.length === 1) {
+    setEventTypes(["Loading...", "..."]);
+    axios
+      .get(
+        `http://localhost:5001/?query=${encodeURIComponent(
+          'select EVENT_TYPE FROM "JASON.LI1".STORM_EVENT GROUP BY EVENT_TYPE ORDER BY EVENT_TYPE'
+        )}`,
+        {
+          crossdomain: true,
+        }
+      )
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = ["ALL"];
+        for (let i in response.data) {
+          dataParsed.push(response.data[i]);
+        }
+        setEventTypes(dataParsed);
+      });
+  }
+  if (states.length === 1) {
+    setStates(["Loading...", "..."]);
+    axios
+      .get(
+        `http://localhost:5001/?query=${encodeURIComponent(
+          'SELECT SNAME FROM "JASON.LI1".STATES'
+        )}`,
+        {
+          crossdomain: true,
+        }
+      )
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = ["ALL"];
+        for (let i in response.data) {
+          dataParsed.push(response.data[i]);
+        }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    console.log(options);
+        setStates(dataParsed);
+      });
+  }
+  const removeSelectedItem = (nm, value) => {
     setOptions((prevState) => ({
       ...prevState,
-      [name]: value,
+      [nm]: options[nm].filter((item) => item !== value),
     }));
   };
-
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (value === "-----------") {
+      return;
+    }
+    if (name === "stateCounty") {
+      if (options.stateCounty.includes(value)) {
+        return;
+      }
+      if (value === "ALL") {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      var arr = options.stateCounty;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "stormEvent") {
+      if (options.stormEvent.includes(value)) {
+        return;
+      }
+      if (value === "ALL") {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.stormEvent;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else {
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
   const getRandomColor = () => {
-    return (
-      "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0")
-    );
+    return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
   };
   //generate the individual lines
-  const lines = () => {
-    const entries = data1.map((option) => {
+  const lines = (dat) => {
+    const entries = dat.map((option) => {
       const keys = Object.keys(option);
       return keys;
     });
@@ -59,7 +145,6 @@ function SevereWeatherTab() {
     const filtered = flattened.filter((key) => key !== "date");
     const uniqueKeys = [...new Set(filtered)];
     return uniqueKeys.map((key) => {
-      console.log(key);
       return (
         <Line
           name={key}
@@ -78,18 +163,32 @@ function SevereWeatherTab() {
       timeformat = "YYYY";
     }
     var conditions = "";
-    if (options.stateCounty !== "ALL") {
-      if (conditions.length === 0) {
+    if (options.stateCounty.length !== 0) {
+      for (let i in options.stateCounty) {
+        if (i > 0) {
+          conditions = `${conditions} OR st.SNAME = '${options.stateCounty[i]}'`;
+        } else {
+          conditions = `st.SNAME = '${options.stateCounty[i]}'`;
+        }
       }
-      conditions = `WHERE st.SNAME = '${options.stateCounty}'`;
+      conditions = `WHERE (${conditions})`;
     }
-    if (options.stormEvent !== "ALL") {
-      if (conditions.length === 0) {
-        conditions = "WHERE ";
+    if (options.stormEvent.length !== 0) {
+      let eventCondition = "";
+      for (let i in options.stormEvent) {
+        if (i === "0") {
+          eventCondition = `${eventCondition} EVENT_TYPE = '${options.stormEvent[i]}'`;
+        } else {
+          eventCondition = `${eventCondition} OR EVENT_TYPE = '${options.stormEvent[i]}'`;
+        }
       }
-      conditions = `${conditions}EVENT_TYPE = '${options.stormEvent}'`;
+      if (conditions.length === 0) {
+        conditions = `WHERE (${eventCondition})`;
+      } else {
+        conditions = `${conditions} AND (${eventCondition})`;
+      }
     }
-    var queryText1 = `WITH dates(yearMonth) AS (
+    const queryText1 = `WITH dates(yearMonth) AS (
       SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
       WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
       AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
@@ -110,19 +209,98 @@ function SevereWeatherTab() {
         crossdomain: true,
       })
       .then((response) => {
-        console.log(response.data);
-        // Logic for generating the graph based on selected data
-        console.log("Generating graph...");
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
         for (let i in response.data) {
           dataParsed.push({
             date: response.data[i][0],
-            eventFrequency: response.data[i][1],
+            total: response.data[i][1],
           });
         }
         setData1(dataParsed);
+      });
+    //do similar for data 2 and data 3;
+    var ftypeANDgender = "";
+    if (options.fatalityType !== "ALL") {
+      ftypeANDgender = `AND sf.FTYPE = '${options.fatalityType}'`;
+    }
+    if (options.sex !== "ALL") {
+      if (options.sex === "UNKNOWN") {
+        ftypeANDgender = `${ftypeANDgender} AND sf.SEX IS NULL`;
+      } else {
+        ftypeANDgender = `${ftypeANDgender} AND sf.SEX = '${options.sex}'`;
+      }
+    }
+    const queryText2 = `WITH dates(yearMonth) AS (
+      SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
+      WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
+      AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
+      GROUP BY to_char(BEGIN_DATE_TIME,'${timeformat}')
+  ),
+  eventList(yearMonth, event_id) AS (
+      SELECT to_char(BEGIN_DATE_TIME,'${timeformat}'), se.EVENT_ID FROM "JASON.LI1".STORM_EVENT se
+      INNER JOIN "JASON.LI1".STORM_LOC sl ON se.EVENT_ID = sl.EVENT_ID
+      INNER JOIN "JASON.LI1".STATES st ON st.FIPS = sl.STATE_FIPS
+      ${conditions}
+  ), deathList (yearMonth) AS
+  (SELECT el.yearMonth FROM EVENTLIST el INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
+  WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
+  SELECT dates.yearMonth, COUNT(deathList.yearMonth) FROM dates 
+  LEFT JOIN deathList ON deathList.yearMonth = dates.yearMonth 
+  GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
+    console.log(queryText2);
+    axios
+      .get(`http://localhost:5001/?query=${encodeURIComponent(queryText2)}`, {
+        crossdomain: true,
+      })
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = [];
+        for (let i in response.data) {
+          dataParsed.push({
+            date: response.data[i][0],
+            total: response.data[i][1],
+          });
+        }
+        setData2(dataParsed);
+      });
+    //Query 3: average age of deaths
+    const queryText3 = `WITH dates(yearMonth) AS (
+        SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
+        WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
+        AND BEGIN_DATE_TIME <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
+        GROUP BY to_char(BEGIN_DATE_TIME,'${timeformat}')
+      ),
+      eventList(yearMonth, event_id) AS (
+          SELECT to_char(BEGIN_DATE_TIME,'${timeformat}'), se.EVENT_ID FROM "JASON.LI1".STORM_EVENT se
+          INNER JOIN "JASON.LI1".STORM_LOC sl ON se.EVENT_ID = sl.EVENT_ID
+          INNER JOIN "JASON.LI1".STATES st ON st.FIPS = sl.STATE_FIPS
+          ${conditions}
+      ), deathList (yearMonth, age) AS (
+          SELECT el.yearMonth, sf.age FROM EVENTLIST el 
+          INNER JOIN "JASON.LI1".STORM_FATALITY sf ON el.EVENT_ID = sf.EVENT_ID
+          WHERE sf.AGE >= ${options.minAge} AND sf.AGE <= ${options.maxAge} ${ftypeANDgender})
+      SELECT dates.yearMonth, COALESCE(ROUND(AVG(deathList.age),2), 0) FROM dates 
+      LEFT JOIN deathList ON deathList.yearMonth = dates.yearMonth 
+      GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
+    console.log(queryText3);
+    axios
+      .get(`http://localhost:5001/?query=${encodeURIComponent(queryText3)}`, {
+        crossdomain: true,
+      })
+      .then((response) => {
+        //fetch data with the custom query and format it like the below
+        //must be ordered by date, since dates cannot be sorted by recharts
+        var dataParsed = [];
+        for (let i in response.data) {
+          dataParsed.push({
+            date: response.data[i][0],
+            total: response.data[i][1],
+          });
+        }
+        setData3(dataParsed);
       });
   };
 
@@ -135,32 +313,72 @@ function SevereWeatherTab() {
           Select Event Type:
           <select
             name="stormEvent"
-            value={options.stormEvent}
+            value={
+              options.stormEvent.length === 0
+                ? "All Events (default)"
+                : `Selected ${options.stormEvent.length}`
+            }
             onChange={handleChange}
           >
-            {eventTypes.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            <option>
+              {options.stormEvent.length === 0
+                ? "All Events (default)"
+                : `Selected ${options.stormEvent.length}`}
+            </option>
+            <option value={"-----------"}>{"-----------"}</option>
+            {eventTypes
+              .filter((item, idx) => !options.stormEvent.includes(item[0]))
+              .map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
           </select>
         </label>
-        <br />
+        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+          {options.stormEvent.map((item, idx) => (
+            <div key={idx} style={{ display: "inline-block" }}>
+              <button
+                onClick={() => removeSelectedItem("stormEvent", item)}
+              >{`${item} x`}</button>
+            </div>
+          ))}
+        </div>
         <label>
           Select State:
           <select
             name="stateCounty"
-            value={options.stateCounty}
+            value={
+              options.stateCounty.length === 0
+                ? "All States (default)"
+                : `Selected ${options.stateCounty.length}`
+            }
             onChange={handleChange}
           >
-            {states.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            <option>
+              {options.stateCounty.length === 0
+                ? "All States (default)"
+                : `Selected ${options.stateCounty.length}`}
+            </option>
+            <option value={"-----------"}>{"-----------"}</option>
+            {states
+              .filter((item, idx) => !options.stateCounty.includes(item[0]))
+              .map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
           </select>
         </label>
-        <br />
+        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+          {options.stateCounty.map((item, idx) => (
+            <div key={idx} style={{ display: "inline-block" }}>
+              <button
+                onClick={() => removeSelectedItem("stateCounty", item)}
+              >{`${item} x`}</button>
+            </div>
+          ))}
+        </div>
         <label>
           <u>Select Date Range</u>
         </label>
@@ -236,17 +454,6 @@ function SevereWeatherTab() {
         </label>
         <br />
         <label>
-          Sex:
-          <select name="sex" value={options.sex} onChange={handleChange}>
-            {sex.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
           Fatality Type: {"(D) = Direct; (I) = Indirect"}
           <br />
           <select
@@ -255,6 +462,18 @@ function SevereWeatherTab() {
             onChange={handleChange}
           >
             {fatalityType.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <br />
+        <label>
+          Gender
+          <br />
+          <select name="sex" value={options.sex} onChange={handleChange}>
+            {sex.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -271,54 +490,97 @@ function SevereWeatherTab() {
         Generate Graphs
       </button>
       {data1 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data1}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis domain={["dataMin", "dataMax"]} />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines()}
-        </LineChart>
+        <div style={{ alignContent: "center" }}>
+          <h2>Storm Event Frequency Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data1}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis domain={["dataMin", "dataMax"]} />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data1)}
+            </LineChart>
+          </div>
+        </div>
       )}
-      {data1 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data1}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines()}
-        </LineChart>
+      {data2 && (
+        <div style={{ alignContent: "center" }}>
+          <h2>Storm Event Fatalities Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data2}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data2)}
+            </LineChart>
+          </div>
+        </div>
+      )}
+      {data3 && (
+        <div style={{ alignContent: "center" }}>
+          <h2>Average Age of Fatalities Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={400}
+              data={data3}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend
+                layout="vertical"
+                verticalAlign="top"
+                align="right"
+                height={36}
+              />
+              {lines(data3)}
+            </LineChart>
+          </div>
+        </div>
       )}
     </div>
   );
