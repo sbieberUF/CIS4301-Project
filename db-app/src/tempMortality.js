@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+} from "recharts";
 
 function TemperatureDependentMortalityTab() {
   const [states, setStates] = useState([]);
@@ -11,6 +20,8 @@ function TemperatureDependentMortalityTab() {
   const [selectedYears, setSelectedYears] = useState([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState([]);
   const [tableData, setTableData] = useState({ temperatureData: [], mortalityData: [] });
+  const [temperatureData, setTemperatureData] = useState([]);
+  const [mortalityData, setMortalityData] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -178,87 +189,163 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
       const mortalityData = mortalityResponse.data;
 
       setTableData({ temperatureData, mortalityData });
+      setTemperatureData(temperatureData.map(data => ({
+        year: parseInt(data[4]), 
+        average_temperature: data[0],
+        mean: data[1],
+        anomaly: data[2],
+      })).sort((a, b) => a.year - b.year));
+      setMortalityData(mortalityData.map(data => ({
+        year: data[4],
+        crude_death_rate: data[0],
+      })));
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
-  const generateGraph = () => {
-    // Logic for generating the graph based on selected data
-    console.log("Generating graph...");
-  };
+
+      const getRandomColor = () => {
+        return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
+      };
+      //generate the individual lines
+      const lines = (dat) => {
+        const entries = dat.map((option) => {
+          const keys = Object.keys(option);
+          return keys;
+        });
+        const flattened = entries.reduce((prev, current) => {
+          prev = prev.concat(current);
+          return prev;
+        }, []);
+        const filtered = flattened.filter((key) => key !== "year");
+        const uniqueKeys = [...new Set(filtered)];
+        return uniqueKeys.map((key) => {
+          return (
+            <Line
+              name={key}
+              type="monotone"
+              stroke={getRandomColor()}
+              dataKey={key}
+              dot={false}
+            />
+          );
+        });
+      };
 
   return (
-    <div>
+    <><div>
+      <div style={{ display: "block", paddingBottom: "50px", width: "25%", height: "550px", marginTop: "20px"}}>
       <h2>Select Criteria</h2>
       <div style={{ textAlign: "center" }}>
         <div>
           <h3>General</h3>
           <label>
             Select State:
-            <select multiple value={selectedStates} onChange={handleStateChange}>
+            <select size="1" value={selectedStates} onChange={handleStateChange}>
+            <option value="">Select State</option>
               {states.map((state) => (
                 <option key={state} value={state}>
                   {state}
                 </option>
               ))}
             </select>
+            {selectedStates.length > 0 && (
+            <div>
+              Selected States: {selectedStates.map((state) => (
+                <span key={state} onClick={() => setSelectedStates(selectedStates.filter((selectedState) => selectedState !== state))}>
+                  {state} &#x2716;
+                </span>
+              ))}
+            </div>
+          )}
           </label>
           <br />
           <label>
             Select County:
-            <select multiple value={selectedCounties} onChange={handleCountyChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedCounties} onChange={handleCountyChange}>
+            <option disabled={selectedCounties.length > 0} value="ALL">All Counties (Default) </option>
               {counties.map((county) => (
                 <option key={county} value={county}>
                   {county}
                 </option>
               ))}
             </select>
+            {selectedCounties.length > 0 && (
+            <div>
+              Selected Counties: {selectedCounties.map((county) => (
+                <span key={county} onClick={() => setSelectedCounties(selectedCounties.filter((selectedCounty) => selectedCounty !== county))}>
+                  {county} &#x2716;
+                </span>
+              ))}
+            </div>
+          )}
           </label>
           <br />
           <label>
             Select Year:
-            <select multiple value={selectedYears} onChange={handleYearChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedYears} onChange={handleYearChange}>
+            <option disabled={selectedYears.length > 0} value="ALL">All Years (Default) </option>
               {years.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
               ))}
             </select>
+            {selectedYears.length > 0 && (
+            <div>
+              Selected Years: {selectedYears.map((year) => (
+                <span key={year} onClick={() => setSelectedYears(selectedYears.filter((selectedYear) => selectedYear !== year))}>
+                  {year} &#x2716;
+                </span>
+              ))}
+            </div>
+            )}
           </label>
           <br />
           <br />
           <label>
             Select Age Group:
-            <select multiple value={selectedAgeGroups} onChange={handleAgeGroupChange}>
-              <option value="ALL">ALL</option>
+            <select size="1" value={selectedAgeGroups} onChange={handleAgeGroupChange}>
+              <option disabled={selectedAgeGroups.length > 0} value="ALL">All Age Groups (Default) </option>
               {ageGroups.map((ageGroup) => (
                 <option key={ageGroup} value={ageGroup}>
                   {ageGroup}
                 </option>
               ))}
             </select>
+            {selectedAgeGroups.length > 0 && (
+            <div>
+              Selected Age Groups: {selectedAgeGroups.map((ageGroup) => (
+                <span key={ageGroup} onClick={() => setSelectedAgeGroups(selectedAgeGroups.filter((selectedAgeGroup) => selectedAgeGroup !== ageGroup))}>
+                  {ageGroup} &#x2716;
+                </span>
+              ))}
+            </div>
+            )}
           </label>
           <br />
           <button onClick={handleDisplayData}>Display Data</button>
         </div>
+        </div>
 
-        <h3>Display Data</h3>
+        <h3>Temperature Data</h3>
         <table style={{ margin: "0 auto" }}>
           <thead>
             <tr>
-              <th>AVGTEMPERATURE</th>
-              <th>MEAN</th>
-              <th>ANOMALY</th>
-              <th>COUNTY</th>
-              <th>YEAR</th>
+              <th>Average Temperature</th>
+              <th>Mean</th>
+              <th>Anomaly</th>
+              <th>County</th>
+              <th>Year</th>
             </tr>
           </thead>
           <tbody>
-            {tableData.temperatureData &&
-              tableData.temperatureData.map((data, index) => (
+          {tableData.temperatureData &&
+            tableData.temperatureData
+              .slice() // Create a copy of the array
+              .sort((a, b) => a[4] - b[4]) // Sort by year in ascending order
+              .map((data, index) => (
                 <tr key={index}>
                   <td>{data[0]}</td>
                   <td>{data[1]}</td>
@@ -276,12 +363,12 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
         <table style={{ margin: "0 auto" }}>
           <thead>
             <tr>
-              <th>DEATHS</th>
-              <th>POPULATION</th>
-              <th>CRUDE_DEATH_RATE</th>
-              <th>COUNTY</th>
-              <th>YEAR</th>
-              <th>AGE_GROUP</th>
+              <th>Deaths</th>
+              <th>Population</th>
+              <th>Crude Death Rate</th>
+              <th>County</th>
+              <th>Year</th>
+              <th>Age Group</th>
             </tr>
           </thead>
           <tbody>
@@ -304,10 +391,40 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
           </tbody>
         </table>
       </div>
-      <hr style={{ margin: "20px 0" }} />
-      <button onClick={generateGraph}>Generate Graph</button>
-    </div>
-  );
-}
+      
+      <div className="graphs" style={{ display: "inline-block", height: "600px", overflowY: "scroll", marginLeft: "300px", marginTop: '-500px' }}>
+  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+    {temperatureData.length > 0 && (
+      <div style={{ marginBottom: "20px" }}>
+        <h2>Average Temperature Over Time</h2>
+        <LineChart width={800} height={400} data={temperatureData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+          {lines(temperatureData)}
+        </LineChart>
+      </div>
+    )}
+    {mortalityData.length > 0 && (
+      <div>
+        <h2>Mortality Rate Over Time</h2>
+        <LineChart width={800} height={400} data={mortalityData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="year" />
+          <YAxis />
+          <Tooltip />
+          <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+          {lines(mortalityData)}
+        </LineChart>
+      </div>
+    )}
+  </div>
+</div>
+            </div> </>
+          );
+        }
+
 
 export default TemperatureDependentMortalityTab;
