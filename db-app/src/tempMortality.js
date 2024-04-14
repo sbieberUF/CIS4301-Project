@@ -233,15 +233,6 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
         });
       };
 
-
-
-      const temperatureDatatest = [
-        { year: "2010", average_temperature: 25 },
-        { year: "2011", average_temperature: 26 },
-        // Add more data points
-      ];
-
-
   return (
     <><div>
       <h2>Select Criteria</h2>
