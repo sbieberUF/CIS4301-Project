@@ -20,8 +20,8 @@ function InvasiveInsectsTab() {
     order: 'All',
     family: 'All',
     genus: 'All',
-    dataType: "inventory_change_value",
-    incomeCategory: "All commodities"
+    dataType: '',
+    incomeCategory: ''
   });
 
   const [data1, setData1] = useState(null);
@@ -99,8 +99,32 @@ function InvasiveInsectsTab() {
       setGenera(startingGenera);
   })}};
 
-  const dataTypes = ["inventory_change_value", "cash_receipt", "intermediate_product_expense"];
-  const incomeCategories = ["All crops", "Animals and products", "All commodities"];
+  const dataTypes = ["Cash Receipts", "Inventory Change", "Intermediate Product Expenses"];
+
+  const [incomeCategories, setIncomeCategories] = useState(['']);
+  const populateCategories = async () => {
+    var startingCat = [];
+    var catQuery = '';
+    if (options.dataType === "Cash Receipts") {
+      catQuery = `SELECT DISTINCT commodity FROM "MIRANDABARNES".cash_receipt ORDER BY commodity`;
+    }
+    else if (options.dataType === "Inventory Change") {
+      catQuery = `SELECT DISTINCT sector FROM "MIRANDABARNES".inventory_change_value ORDER BY sector`
+    }
+    else if (options.dataType === "Intermediate Product Expenses") {
+      catQuery = `SELECT DISTINCT ip_category FROM "MIRANDABARNES".intermediate_product_expense ORDER BY ip_category`
+    }
+    axios
+    .get(`http://localhost:5001/?query=${encodeURIComponent(catQuery)}`, {
+      crossdomain: true,
+    })
+    .then((response) => {
+      console.log(response.data);
+      for (let i in response.data) {
+        startingCat.push(response.data[i]);
+      }
+      setIncomeCategories(startingCat);
+  })}
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -158,10 +182,12 @@ function InvasiveInsectsTab() {
     }
     var conditions = "";
     var invasiveconditions = `WHERE origin = 'invasive'`;
+    var agtable = 'cash_receipt';
+    var agconditions = `WHERE commodity = 'All Commodities-All'`;
+    var aglocconditions = '';
     if (options.state !== 'All' && options.state !== '') {
-      if (conditions.length === 0) {
-      }
       conditions = `WHERE obsstate = '${options.state}'`;
+      aglocconditions = ` AND state_name = '${options.state}'`
       if (options.county !== 'All' && options.county !== '') {
         conditions += ` AND obscounty = '${options.county}'`;
         invasiveconditions += ` AND obscounty = '${options.county}'`;
@@ -177,6 +203,29 @@ function InvasiveInsectsTab() {
         }
       }
     }
+
+    if (options.dataType === "Cash Receipts" && options.incomeCategory !== 'All Commodities-All') {
+      agconditions = `WHERE commodity = '${options.incomeCategory}'`;
+    }
+    else if (options.dataType === "Inventory Change") {
+      agtable = 'inventory_change_value';
+      if (agconditions !== '') {
+        agconditions = `WHERE sector = '${options.incomeCategory}'`;
+      }
+      else {
+        agconditions = `WHERE sector = 'All commodities'`
+      }
+    }
+    else if (options.dataType === "Intermediate Product Expenses") {
+      agtable = 'intermediate_product_expense'
+      if (agconditions !== '') {
+        agconditions = `WHERE ip_category = '${options.incomeCategory}'`;
+      }
+      else {
+        agconditions = '';
+      }
+    }
+
     
     var queryText1 = `WITH dates(dateIntervals) AS (
       SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
@@ -209,8 +258,8 @@ function InvasiveInsectsTab() {
       ),
       agdatalist(modDateIntervals, agcriterion) AS (
         SELECT TO_CHAR(${timeformatag}), ROUND(AVG( value / (gdp_deflator/100)))
-            FROM cash_receipt
-            WHERE commodity = 'All Commodities-All'
+            FROM ${agtable}
+            ${agconditions}${aglocconditions}
             GROUP BY TO_CHAR(${timeformatag})
       ),
       normalagcombo(dateIntervals, dollarperinvasive) AS (
@@ -281,9 +330,9 @@ function InvasiveInsectsTab() {
         </label>
         <br />
         <label>
-          Select Date Interval:
+          Select Date Resolution:
           <select name="dateInterval" value={options.dateInterval} onChange={handleChange}>
-            <option value="">Pick Intervals</option>
+            <option value="">Select Resolution</option>
             {dateIntervals.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -318,7 +367,7 @@ function InvasiveInsectsTab() {
         <h3>Farm Income/Expense Data:</h3>
         <label>
           Select Farm Income Data Type:
-          <select name="dataType" value={options.dataType} onChange={handleChange}>
+          <select name="dataType" value={options.dataType} onBlur={populateCategories} onChange={handleChange}>
             <option value="">Select Income Data Type</option>
             {dataTypes.map((option) => (
               <option key={option} value={option}>{option}</option>
