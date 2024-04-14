@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+} from "recharts";
 
 function TemperatureDependentMortalityTab() {
   const [states, setStates] = useState([]);
@@ -11,6 +20,8 @@ function TemperatureDependentMortalityTab() {
   const [selectedYears, setSelectedYears] = useState([]);
   const [selectedAgeGroups, setSelectedAgeGroups] = useState([]);
   const [tableData, setTableData] = useState({ temperatureData: [], mortalityData: [] });
+  const [temperatureData, setTemperatureData] = useState([]);
+  const [mortalityData, setMortalityData] = useState([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -178,18 +189,61 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
       const mortalityData = mortalityResponse.data;
 
       setTableData({ temperatureData, mortalityData });
+      setTemperatureData(temperatureData.map(data => ({
+        year: parseInt(data[4]), 
+        average_temperature: data[0],
+        mean: data[1],
+        anomaly: data[2],
+      })).sort((a, b) => a.year - b.year));
+      setMortalityData(mortalityData.map(data => ({
+        year: data[4],
+        crude_death_rate: data[0],
+      })));
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
-  const generateGraph = () => {
-    // Logic for generating the graph based on selected data
-    console.log("Generating graph...");
-  };
+
+      const getRandomColor = () => {
+        return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
+      };
+      //generate the individual lines
+      const lines = (dat) => {
+        const entries = dat.map((option) => {
+          const keys = Object.keys(option);
+          return keys;
+        });
+        const flattened = entries.reduce((prev, current) => {
+          prev = prev.concat(current);
+          return prev;
+        }, []);
+        const filtered = flattened.filter((key) => key !== "year");
+        const uniqueKeys = [...new Set(filtered)];
+        return uniqueKeys.map((key) => {
+          return (
+            <Line
+              name={key}
+              type="monotone"
+              stroke={getRandomColor()}
+              dataKey={key}
+              dot={false}
+            />
+          );
+        });
+      };
+
+
+
+      const temperatureDatatest = [
+        { year: "2010", average_temperature: 25 },
+        { year: "2011", average_temperature: 26 },
+        // Add more data points
+      ];
+
 
   return (
-    <div>
+    <><div>
       <h2>Select Criteria</h2>
       <div style={{ textAlign: "center" }}>
         <div>
@@ -245,20 +299,23 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
           <button onClick={handleDisplayData}>Display Data</button>
         </div>
 
-        <h3>Display Data</h3>
+        <h3>Temperature Data</h3>
         <table style={{ margin: "0 auto" }}>
           <thead>
             <tr>
-              <th>AVGTEMPERATURE</th>
-              <th>MEAN</th>
-              <th>ANOMALY</th>
-              <th>COUNTY</th>
-              <th>YEAR</th>
+              <th>Average Temperature</th>
+              <th>Mean</th>
+              <th>Anomaly</th>
+              <th>County</th>
+              <th>Year</th>
             </tr>
           </thead>
           <tbody>
-            {tableData.temperatureData &&
-              tableData.temperatureData.map((data, index) => (
+          {tableData.temperatureData &&
+            tableData.temperatureData
+              .slice() // Create a copy of the array
+              .sort((a, b) => a[4] - b[4]) // Sort by year in ascending order
+              .map((data, index) => (
                 <tr key={index}>
                   <td>{data[0]}</td>
                   <td>{data[1]}</td>
@@ -276,12 +333,12 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
         <table style={{ margin: "0 auto" }}>
           <thead>
             <tr>
-              <th>DEATHS</th>
-              <th>POPULATION</th>
-              <th>CRUDE_DEATH_RATE</th>
-              <th>COUNTY</th>
-              <th>YEAR</th>
-              <th>AGE_GROUP</th>
+              <th>Deaths</th>
+              <th>Population</th>
+              <th>Crude Death Rate</th>
+              <th>County</th>
+              <th>Year</th>
+              <th>Age Group</th>
             </tr>
           </thead>
           <tbody>
@@ -304,10 +361,44 @@ if (selectedAgeGroups.length > 0 && !selectedAgeGroups.includes("ALL")) {
           </tbody>
         </table>
       </div>
-      <hr style={{ margin: "20px 0" }} />
-      <button onClick={generateGraph}>Generate Graph</button>
+      
+      <div className="graphs" style={{ display: "inline-block", width: "70%", height: "550px", overflowY: "scroll" }}>
+      {temperatureData.length > 0 && (
+        <div style={{ alignContent: "center" }}>
+          <h2>Average Temperature By State And County Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart width={800} height={400} data={temperatureData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
+              <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+              {lines(temperatureData)}
+            </LineChart>
+          </div>
+        </div>
+      )}
+      {mortalityData.length > 0 && (
+        <div style={{ alignContent: "center" }}>
+          <h2>Mortality Rates By State And County Over Time</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart width={800} height={400} data={mortalityData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
+              <Legend layout="vertical" verticalAlign="top" align="right" height={36} />
+              {lines(mortalityData)}
+            </LineChart>
+          </div>
+        </div>
+      )}
     </div>
-  );
-}
+            </div> </>
+          );
+        }
+
 
 export default TemperatureDependentMortalityTab;
