@@ -176,7 +176,7 @@ function SevereWeatherTab() {
     if (options.stormEvent.length !== 0) {
       let eventCondition = "";
       for (let i in options.stormEvent) {
-        if (i == 0) {
+        if (i === "0") {
           eventCondition = `${eventCondition} EVENT_TYPE = '${options.stormEvent[i]}'`;
         } else {
           eventCondition = `${eventCondition} OR EVENT_TYPE = '${options.stormEvent[i]}'`;
