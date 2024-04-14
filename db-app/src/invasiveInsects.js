@@ -26,6 +26,7 @@ function InvasiveInsectsTab() {
 
   const [data1, setData1] = useState(null);
   const [data2, setData2] = useState(null);
+  const [data3, setData3] = useState(null);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
   const [counties, setCounties] = useState(['All']);
@@ -80,6 +81,24 @@ function InvasiveInsectsTab() {
       }
       setFamilies(startingFamilies);
   })}};
+  const [genera, setGenera] = useState(['All'])
+  const populateGenera = async () => {
+    var startingGenera = ['All'];
+    if (options.family !== 'All' && options.family !== '') {
+    var genusQuery = `SELECT DISTINCT genus FROM "MIRANDABARNES".insect
+    WHERE family = '${options.family}' ORDER BY genus`;
+    axios
+    .get(`http://localhost:5001/?query=${encodeURIComponent(genusQuery)}`, {
+      crossdomain: true,
+    })
+    .then((response) => {
+      console.log(response.data);
+      for (let i in response.data) {
+        startingGenera.push(response.data[i]);
+      }
+      setGenera(startingGenera);
+  })}};
+
   const dataTypes = ["inventory_change_value", "cash_receipt", "intermediate_product_expense"];
   const incomeCategories = ["All crops", "Animals and products", "All commodities"];
   
@@ -91,7 +110,6 @@ function InvasiveInsectsTab() {
       [name]: value,
     }));
   };
-
   
   const getRandomColor = () => {
     return (
@@ -151,18 +169,15 @@ function InvasiveInsectsTab() {
       invasiveconditions += ` AND obsstate = '${options.state}'`;
     }
     if (options.order !== 'All' && options.order !== '') {
-      if (conditions.length === 0) {
-        conditions = `WHERE insect_order = '${options.order}'`;
-        if (options.family !== 'All' && options.family !== '') {
-          conditions += ` AND family = '${options.family}'`;
-          invasiveconditions += ` AND family = '${options.family}'`;
+      invasiveconditions += ` AND insect_order = '${options.order}'`;
+      if (options.family !== 'All' && options.family !== '') {
+        invasiveconditions += ` AND family = '${options.family}'`;
+        if (options.genus !== 'All' && options.genus !== '') {
+          invasiveconditions += ` AND genus = '${options.genus}'`;
         }
       }
-      else {
-        conditions += ` AND insect_order = '${options.order}'`;
-      }
-      invasiveconditions += ` AND insect_order = '${options.order}'`;
     }
+    
     var queryText1 = `WITH dates(dateIntervals) AS (
       SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
         WHERE observationdate >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
@@ -188,18 +203,23 @@ function InvasiveInsectsTab() {
         FROM allobservationlist
         GROUP BY allobservationlist.dateIntervals
       ),
-      normalized(dateIntervals, normCount) AS (SELECT invasivescount.dateIntervals, ROUND(invCount / aCount * 1000)
+      normalized(dateIntervals, normCount) AS (SELECT invasivescount.dateIntervals, ROUND(invCount / aCount * 1000, 3)
         FROM invasivescount JOIN allcount ON invasivescount.dateIntervals = allcount.dateIntervals
+        WHERE invasivescount.dateIntervals IS NOT NULL
       ),
       agdatalist(modDateIntervals, agcriterion) AS (
         SELECT TO_CHAR(${timeformatag}), ROUND(AVG( value / (gdp_deflator/100)))
             FROM cash_receipt
             WHERE commodity = 'All Commodities-All'
             GROUP BY TO_CHAR(${timeformatag})
+      ),
+      normalagcombo(dateIntervals, dollarperinvasive) AS (
+        SELECT normalized.dateIntervals, agcriterion / normCount
+          FROM normalized JOIN agdatalist ON SUBSTR(normalized.dateIntervals, 1, 4) = agdatalist.modDateIntervals
       )
-    SELECT dates.dateIntervals, normCount, agcriterion, ROUND(normCount / agcriterion)
+    SELECT dates.dateIntervals, normCount, agcriterion, dollarperinvasive
         FROM dates LEFT OUTER JOIN normalized on dates.dateIntervals = normalized.dateIntervals LEFT OUTER JOIN agdatalist ON
-            SUBSTR(dates.dateIntervals, 1, 4) = agdatalist.modDateIntervals
+            SUBSTR(dates.dateIntervals, 1, 4) = agdatalist.modDateIntervals LEFT OUTER JOIN normalagcombo on dates.dateIntervals = normalagcombo.dateIntervals
         ORDER BY dates.dateIntervals`;
     console.log(queryText1);
     axios
@@ -214,6 +234,7 @@ function InvasiveInsectsTab() {
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed1 = [];
         var dataParsed2 = [];
+        var dataParsed3 = [];
         for (let i in response.data) {
           dataParsed1.push({
             date: response.data[i][0],
@@ -223,9 +244,14 @@ function InvasiveInsectsTab() {
             date: response.data[i][0],
             usDollars: response.data[i][2],
           });
+          dataParsed3.push({
+            date: response.data[i][0],
+            usDollarsPerNormalizedInvasiveObservation: response.data[i][3],
+          });
         }
         setData1(dataParsed1);
         setData2(dataParsed2);
+        setData3(dataParsed3);
       });
   };
 
@@ -324,9 +350,19 @@ function InvasiveInsectsTab() {
         <br />
         <label>
           Select Family:
-          <select name="family" value={options.family} onChange={handleChange}>
+          <select name="family" value={options.family} onBlur={populateGenera} onChange={handleChange}>
             <option value="">Select Family</option>
             {families.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        </label>
+        <br />
+        <label>
+          Select Genus:
+          <select name="genus" value={options.genus} onBlur={populateGenera} onChange={handleChange}>
+            <option value="">Select Genus</option>
+            {genera.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
@@ -388,6 +424,31 @@ function InvasiveInsectsTab() {
             height={36}
           />
           {lines(data2)}
+        </LineChart>
+      )}
+      {data3 && (
+        <LineChart
+          width={700}
+          height={400}
+          data={data3}
+          margin={{
+            top: 20,
+            right: 20,
+            bottom: 20,
+            left: 20,
+          }}
+        >
+          <CartesianGrid stroke="#f5f5f5" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Legend
+            layout="vertical"
+            verticalAlign="top"
+            align="right"
+            height={36}
+          />
+          {lines(data3)}
         </LineChart>
       )}
     </div>
