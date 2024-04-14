@@ -305,283 +305,304 @@ function SevereWeatherTab() {
   };
 
   return (
-    <div>
-      <h2>Select Criteria</h2>
-      <div>
-        <h3>General</h3>
-        <label>
-          Select Event Type:
-          <select
-            name="stormEvent"
-            value={
-              options.stormEvent.length === 0
-                ? "All Events (default)"
-                : `Selected ${options.stormEvent.length}`
-            }
-            onChange={handleChange}
-          >
-            <option>
-              {options.stormEvent.length === 0
-                ? "All Events (default)"
-                : `Selected ${options.stormEvent.length}`}
-            </option>
-            <option value={"-----------"}>{"-----------"}</option>
-            {eventTypes
-              .filter((item, idx) => !options.stormEvent.includes(item[0]))
-              .map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-          </select>
-        </label>
-        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
-          {options.stormEvent.map((item, idx) => (
-            <div key={idx} style={{ display: "inline-block" }}>
-              <button
-                onClick={() => removeSelectedItem("stormEvent", item)}
-              >{`${item} x`}</button>
-            </div>
-          ))}
-        </div>
-        <label>
-          Select State:
-          <select
-            name="stateCounty"
-            value={
-              options.stateCounty.length === 0
-                ? "All States (default)"
-                : `Selected ${options.stateCounty.length}`
-            }
-            onChange={handleChange}
-          >
-            <option>
-              {options.stateCounty.length === 0
-                ? "All States (default)"
-                : `Selected ${options.stateCounty.length}`}
-            </option>
-            <option value={"-----------"}>{"-----------"}</option>
-            {states
-              .filter((item, idx) => !options.stateCounty.includes(item[0]))
-              .map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-          </select>
-        </label>
-        <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
-          {options.stateCounty.map((item, idx) => (
-            <div key={idx} style={{ display: "inline-block" }}>
-              <button
-                onClick={() => removeSelectedItem("stateCounty", item)}
-              >{`${item} x`}</button>
-            </div>
-          ))}
-        </div>
-        <label>
-          <u>Select Date Range</u>
-        </label>
-        <br />
-        <label>
-          Start Date:
-          <input
-            type="date"
-            id="startDate"
-            name="startDate"
-            value={options.startDate}
-            onChange={handleChange}
-            min="1950-01-01"
-            max="2023-12-31"
-          />
-          <br />
-          End Date:
-          <input
-            type="date"
-            id="endDate"
-            name="endDate"
-            value={options.endDate}
-            onChange={handleChange}
-            min="1950-01-01"
-            max="2023-12-31"
-          />
-        </label>
-        <br />
-        <label>
-          Data Point Resolution:
-          <select
-            name="resolution"
-            value={options.resolution}
-            onChange={handleChange}
-          >
-            {resolution.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <br />
-      </div>
-      <div>
-        <h3>Fatality Settings</h3>
-        <label>
-          <u>Age Range: </u>{" "}
-        </label>
-        <br />
-        <label>
-          Minimum Age:{" "}
-          <input
-            type="number"
-            id="minAge"
-            name="minAge"
-            min="0"
-            max="103"
-            value={options.minAge}
-            onChange={handleChange}
-          />
-          <br />
-          Maximum Age:{" "}
-          <input
-            type="number"
-            id="maxAge"
-            name="maxAge"
-            min="0"
-            max="103"
-            value={options.maxAge}
-            onChange={handleChange}
-          />
-        </label>
-        <br />
-        <label>
-          Fatality Type: {"(D) = Direct; (I) = Indirect"}
-          <br />
-          <select
-            name="fatalityType"
-            value={options.fatalityType}
-            onChange={handleChange}
-          >
-            {fatalityType.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Gender
-          <br />
-          <select name="sex" value={options.sex} onChange={handleChange}>
-            {sex.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <hr style={{ margin: "20px 0" }} />
-      <button
-        onClick={() => {
-          generateGraph(options);
+    <div style={{ display: "block", paddingBottom: "50px" }}>
+      <fieldset
+        className="settings"
+        style={{
+          display: "inline-block",
+          width: "25%",
+          height: "550px",
+          overflowY: "scroll",
         }}
       >
-        Generate Graphs
-      </button>
-      {data1 && (
-        <div style={{ alignContent: "center" }}>
-          <h2>Storm Event Frequency Over Time</h2>
-          <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart
-              width={800}
-              height={400}
-              data={data1}
-              margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 20,
-              }}
+        <legend>Select Criteria</legend>
+        <div>
+          <h3>General</h3>
+          <label>
+            Select Event Type:
+            <select
+              name="stormEvent"
+              value={
+                options.stormEvent.length === 0
+                  ? "All Events (default)"
+                  : `Selected ${options.stormEvent.length}`
+              }
+              onChange={handleChange}
             >
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="date" />
-              <YAxis domain={["dataMin", "dataMax"]} />
-              <Tooltip />
-              <Legend
-                layout="vertical"
-                verticalAlign="top"
-                align="right"
-                height={36}
-              />
-              {lines(data1)}
-            </LineChart>
+              <option>
+                {options.stormEvent.length === 0
+                  ? "All Events (default)"
+                  : `Selected ${options.stormEvent.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"}</option>
+              {eventTypes
+                .filter((item, idx) => !options.stormEvent.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.stormEvent.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("stormEvent", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-      {data2 && (
-        <div style={{ alignContent: "center" }}>
-          <h2>Storm Event Fatalities Over Time</h2>
-          <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart
-              width={800}
-              height={400}
-              data={data2}
-              margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 20,
-              }}
+          <label>
+            Select State:
+            <select
+              name="stateCounty"
+              value={
+                options.stateCounty.length === 0
+                  ? "All States (default)"
+                  : `Selected ${options.stateCounty.length}`
+              }
+              onChange={handleChange}
             >
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend
-                layout="vertical"
-                verticalAlign="top"
-                align="right"
-                height={36}
-              />
-              {lines(data2)}
-            </LineChart>
+              <option>
+                {options.stateCounty.length === 0
+                  ? "All States (default)"
+                  : `Selected ${options.stateCounty.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"}</option>
+              {states
+                .filter((item, idx) => !options.stateCounty.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.stateCounty.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("stateCounty", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
           </div>
-        </div>
-      )}
-      {data3 && (
-        <div style={{ alignContent: "center" }}>
-          <h2>Average Age of Fatalities Over Time</h2>
+          <label>
+            <u>Select Date Range</u>
+          </label>
           <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart
-              width={800}
-              height={400}
-              data={data3}
-              margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 20,
-              }}
+          <label>
+            Start Date:
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={options.startDate}
+              onChange={handleChange}
+              min="1950-01-01"
+              max="2023-12-31"
+            />
+            <br />
+            End Date:
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={options.endDate}
+              onChange={handleChange}
+              min="1950-01-01"
+              max="2023-12-31"
+            />
+          </label>
+          <br />
+          <label>
+            Data Point Resolution:
+            <select
+              name="resolution"
+              value={options.resolution}
+              onChange={handleChange}
             >
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend
-                layout="vertical"
-                verticalAlign="top"
-                align="right"
-                height={36}
-              />
-              {lines(data3)}
-            </LineChart>
-          </div>
+              {resolution.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <br />
         </div>
-      )}
+        <div>
+          <h3>Fatality Settings</h3>
+          <label>
+            <u>Age Range: </u>{" "}
+          </label>
+          <br />
+          <label>
+            Minimum Age:{" "}
+            <input
+              type="number"
+              id="minAge"
+              name="minAge"
+              min="0"
+              max="103"
+              value={options.minAge}
+              onChange={handleChange}
+            />
+            <br />
+            Maximum Age:{" "}
+            <input
+              type="number"
+              id="maxAge"
+              name="maxAge"
+              min="0"
+              max="103"
+              value={options.maxAge}
+              onChange={handleChange}
+            />
+          </label>
+          <br />
+          <label>
+            Fatality Type: {"(D) = Direct; (I) = Indirect"}
+            <br />
+            <select
+              name="fatalityType"
+              value={options.fatalityType}
+              onChange={handleChange}
+            >
+              {fatalityType.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <br />
+          <label>
+            Gender
+            <br />
+            <select name="sex" value={options.sex} onChange={handleChange}>
+              {sex.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <hr style={{ margin: "20px 0" }} />
+        <button
+          onClick={() => {
+            generateGraph(options);
+          }}
+        >
+          Generate Graphs
+        </button>
+      </fieldset>
+      <div
+        className="graphs"
+        style={{
+          display: "inline-block",
+          width: "70%",
+          height: "550px",
+          overflowY: "scroll",
+        }}
+      >
+        {data1 && (
+          <div style={{ alignContent: "center" }}>
+            <h2>Storm Event Frequency Over Time</h2>
+            <br />
+            <div style={{ display: "inline-block" }}>
+              <LineChart
+                width={800}
+                height={400}
+                data={data1}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 20,
+                }}
+              >
+                <CartesianGrid stroke="#f5f5f5" />
+                <XAxis dataKey="date" />
+                <YAxis domain={["dataMin", "dataMax"]} />
+                <Tooltip />
+                <Legend
+                  layout="vertical"
+                  verticalAlign="top"
+                  align="right"
+                  height={36}
+                />
+                {lines(data1)}
+              </LineChart>
+            </div>
+          </div>
+        )}
+        {data2 && (
+          <div style={{ alignContent: "center" }}>
+            <h2>Storm Event Fatalities Over Time</h2>
+            <br />
+            <div style={{ display: "inline-block" }}>
+              <LineChart
+                width={800}
+                height={400}
+                data={data2}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 20,
+                }}
+              >
+                <CartesianGrid stroke="#f5f5f5" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend
+                  layout="vertical"
+                  verticalAlign="top"
+                  align="right"
+                  height={36}
+                />
+                {lines(data2)}
+              </LineChart>
+            </div>
+          </div>
+        )}
+        {data3 && (
+          <div style={{ alignContent: "center" }}>
+            <h2>Average Age of Fatalities Over Time</h2>
+            <br />
+            <div style={{ display: "inline-block" }}>
+              <LineChart
+                width={800}
+                height={400}
+                data={data3}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 20,
+                }}
+              >
+                <CartesianGrid stroke="#f5f5f5" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend
+                  layout="vertical"
+                  verticalAlign="top"
+                  align="right"
+                  height={36}
+                />
+                {lines(data3)}
+              </LineChart>
+            </div>
+          </div>
+        )}
+      </div>
+      <br />
     </div>
   );
 }
