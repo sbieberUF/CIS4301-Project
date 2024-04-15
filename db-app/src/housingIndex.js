@@ -27,7 +27,7 @@ function HousingPriceIndexTab() {
   };
 
   const fetchStates = async () => {
-    const statesQuery = 'SELECT DISTINCT state_name FROM state ORDER BY state_name';
+    const statesQuery = 'SELECT DISTINCT state_name FROM rrodriguez7.state ORDER BY state_name';
     try {
       const { data } = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(statesQuery)}`);
       setStates(data);
@@ -38,7 +38,7 @@ function HousingPriceIndexTab() {
 
   const fetchMunicipalities = async (state) => {
     if (!state) return;
-    const municipalitiesQuery = `SELECT DISTINCT municipality_name FROM municipality WHERE state_name = '${state}' ORDER BY municipality_name`;
+    const municipalitiesQuery = `SELECT DISTINCT municipality_name FROM rrodriguez7.municipality WHERE state_name = '${state}' ORDER BY municipality_name`;
     try {
       const { data } = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(municipalitiesQuery)}`);
       setMunicipalities(data);
@@ -51,10 +51,10 @@ function HousingPriceIndexTab() {
   const fetchYears = async (state, municipality) => {
     if (!state) return;
 
-    let yearsQuery = `SELECT DISTINCT hs.year FROM housing_price_index_state hs`;
+    let yearsQuery = `SELECT DISTINCT hs.year FROM rrodriguez7.housing_price_index_state hs`;
 
     if (municipality) {
-      yearsQuery += ` INNER JOIN municipality mp ON hs.state_name = mp.state_name 
+      yearsQuery += ` INNER JOIN rrodriguez7.municipality mp ON hs.state_name = mp.state_name 
                        WHERE hs.state_name = '${state}' AND mp.municipality_name = '${municipality}'`;
     } else {
       yearsQuery += ` WHERE hs.state_name = '${state}'`;
@@ -88,13 +88,13 @@ function HousingPriceIndexTab() {
       hpic.state_name,
       m.municipality_name
     FROM 
-      housing_price_index_city hpic
+      rrodriguez7.housing_price_index_city hpic
     JOIN 
-      municipality m ON hpic.municipality_name = m.municipality_name AND hpic.state_name = m.state_name
+      rrodriguez7.municipality m ON hpic.municipality_name = m.municipality_name AND hpic.state_name = m.state_name
     JOIN 
-      weather_station ws ON m.municipality_name = ws.municipality_name AND m.state_name = ws.state_name
+      rrodriguez7.weather_station ws ON m.municipality_name = ws.municipality_name AND m.state_name = ws.state_name
     JOIN 
-      quarterly_precipitation qp ON ws.station_id = qp.station_id AND hpic.year = qp.precipitation_year
+      rrodriguez7.quarterly_precipitation qp ON ws.station_id = qp.station_id AND hpic.year = qp.precipitation_year
     WHERE 
       hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})
     ORDER BY 
@@ -103,8 +103,8 @@ function HousingPriceIndexTab() {
 
     const precipitationQuery = `
       SELECT qp.quarter, qp.amount, qp.precipitation_year, ws.state_name
-      FROM quarterly_precipitation qp
-      JOIN weather_station ws ON qp.station_id = ws.station_id
+      FROM rrodriguez7.quarterly_precipitation qp
+      JOIN rrodriguez7.weather_station ws ON qp.station_id = ws.station_id
       WHERE ws.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})
       ORDER BY qp.precipitation_year, qp.quarter
     `;
