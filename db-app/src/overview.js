@@ -36,16 +36,18 @@ async function totalTupleGetter() {
             "as well as possible fatality types associated with those events." +
             " The data is then presented in 3 graphs: (1) Frequency of storm events with respect to time." +
             " (2) Frequency of related deaths with respect to time" +
-            " (3) Average age of deaths with respect to time"
+            " (3) Average age of deaths with respect to time. " +
+            "Data for this set came from the National Oceanic and Atmospheric Administration."
         );
         break;
       case "Temperature-Dependent Mortality":
         setPreview("This page fetches and displays data related to average temperature and mortality rates based on user-selected criteria such\n" +
          "as state, county, year, and age group. The years selectable range from 1979 to 2015 and all of the data is gathered from the\n" +
-         "United States. It uses Recharts to visualize the data with line charts. Users can select criteria, view the data in tables, and see the corresponding\n" +
+         "United States. Users can select criteria, view the data in tables, and see the corresponding\n" +
          "charts for temperature and mortality rates over time. Temperature is the average temperature of selected state(s)/county(ies) and mortality rate is the\n" +
          "calculated crude death rate from the data: Crude Rates are expressed as the number of deaths reported each calendar year per 100,000 population, reporting\n" +
-         "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000.");
+         "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000. " +
+         "Data for this set came from the Centers for Disease Control and Prevention and the National Oceanic and Atmospheric Administration.");
         break;
       case "Invasive Insects":
         setPreview("This page is designed with the goal of a) determining the extent to which iNaturalist observations serve as an effective proxy for damage caused\n" +
@@ -55,11 +57,21 @@ async function totalTupleGetter() {
         "Datasets for this part of the application are derived from iNaturalist, the Global Register of Introduced and Invasive Species - United States (Contiguous),\n" +
         "and the Economic Research Service of the U.S. Department of Agriculture.");
         break;
+      case "Insect Diversity":
+        setPreview("More diverse ecosytems are more likely to be robust to stressors and provide a wider array of important ecosystem services.\n" +
+        "This page is meant to allow users to use iNaturalist to gauge relative levels of diversity between different locations, specifically via Simpson's index.\n" +
+        "This metric gets smaller the more diverse a population is. Users can determine how diverse their states/counties are relative to each other, as well as select\n" +
+        "specific taxa whose level of diversity they want to assess in more detail. Data for this part of the application came from iNaturalist.");
+        break;
       case "Housing Index":
-        setPreview("Housing Index Preview/Summary");
+        setPreview("This page examines the degree to which deviations from average precipitation (i.e., flooding and drought conditions) impact housing price index in different\n" +
+        "places in the United States over time. This should not only demonstrate how such events can affect property value, but also allow a user to answer questions about whether\n" +
+        "different localities are equally impacted by equivalent precipitation problems. The precipitation data comes from the National Centers for Environmental Information,\n" +
+        "and the housing index data is derived from a set made available by the  Federal Housing Finance Agency.");
         break;
       case "Government Spending":
-        setPreview("Government Spending Preview/Summary");
+        setPreview("To move from analyses of impact to analyses of action, we also incorporate a final graph using a dataset from the International Monetary Fund regarding\n" +
+        "expenditures on environmental policies by different countries. Users can evaluate the amount that governments are spending on climate policy in their local currencies.");
         break;
       default:
         setPreview("");
@@ -87,8 +99,8 @@ async function totalTupleGetter() {
         {" "}
         Users are invited to explore five distinct dashboards examining severe
         weather, human health and temperature, invasive species burdens on
-        agriculture, property value and precipitation, and, lastly, government
-        spending. On each page, trends in these topics can be examined over time
+        agriculture, property value and precipitation, etc.. On each page, trends
+        in these topics can be examined over time
         and plotted as curves on different graphs. Users have the flexibility to
         select different geographic locations, taxa, agricultural commodities,
         causes of death, etc. depending on the target graph, as well as to
@@ -101,19 +113,22 @@ async function totalTupleGetter() {
       <hr style={{ borderTop: "3px solid #bbb" }}></hr>
       <div>
         <button onClick={() => showPreview("Severe Weather")}>
-          Severe Weather Preview/Summary
+          Severe Weather Summary
         </button>
         <button onClick={() => showPreview("Temperature-Dependent Mortality")}>
-          Mortality Preview/Summary
+          Mortality Summary
+        </button>
+        <button onClick={() => showPreview("Insect Diversity")}>
+          Insect Diversity Summary
         </button>
         <button onClick={() => showPreview("Invasive Insects")}>
-          Invasive Insects Preview/Summary
+          Invasive Insects Summary
         </button>
         <button onClick={() => showPreview("Housing Index")}>
-          Housing Index Preview/Summary
+          Housing Index Summary
         </button>
         <button onClick={() => showPreview("Government Spending")}>
-          Government Spending Preview/Summary
+          Government Spending Summary
         </button>
       </div>
       {preview && <p>{preview}</p>}
@@ -123,7 +138,7 @@ async function totalTupleGetter() {
         The data for this project has been derived from several publically
         available datasets published by various agencies of the U.S. government,
         among other sources. More detail on each source is provided on the
-        dashboard pages into which they were incorporated. The total number of
+        preview slides. The total number of
         tuples assimilated into the database can be obtained using the button
         below.{" "}
       </p>
