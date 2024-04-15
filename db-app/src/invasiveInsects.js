@@ -25,9 +25,9 @@ function InvasiveInsectsTab() {
     incomeCategory: []
   });
 
-  const [data1, setData1] = useState(null);
-  const [data2, setData2] = useState(null);
-  const [data3, setData3] = useState(null);
+  const [data1, setData1] = useState([]);
+  const [data2, setData2] = useState([]);
+  const [data3, setData3] = useState([]);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
   const [counties, setCounties] = useState([]);
@@ -262,33 +262,35 @@ function InvasiveInsectsTab() {
       "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0")
     );
   };
-  
-  const lines = (dataset) => {
-    const entries = dataset.map((option) => {
-      const keys = Object.keys(option);
-      return keys;
-    });
-    const flattened = entries.reduce((prev, current) => {
-      prev = prev.concat(current);
-      return prev;
-    }, []);
-    const filtered = flattened.filter((key) => key !== "date");
-    const uniqueKeys = [...new Set(filtered)];
-    return uniqueKeys.map((key) => {
-      return (
-        <Line
-          name={key}
-          type="monotone"
-          stroke={getRandomColor()}
-          dataKey={key}
-          dot={false}
-        />
-      );
-    });
-  };
+
+  const clearCharts = () => {
+    setData1([]);
+    setData2([]);
+    setData3([]);
+  }
+
+  const transformDataForRecharts = (input) => {
+    const data = {};
+    if (!(Object.is(input[0], null))) {
+      input.forEach(item => {
+        const { dataarray, lilid } = item;
+        dataarray.forEach(({ date, datakey }) => {
+          if (!data[date]) {
+            data[date] = { date };
+          }
+          data[date][lilid] = datakey;
+        });
+      });
+    }
+    // Convert object to array for Recharts compatibility
+    return Object.values(data);
+  }
 
   const generateGraph = async (options) => {
     //format the string
+    var optionString1 = ``;
+    var optionString2 = ``;
+    var optionString3 = ``;
     var timeformat = `observationdate, 'YYYY-MM-DD'`;
     var timeformatag = `year`;
     if (options.dateInterval === "Monthly") {
@@ -307,6 +309,9 @@ function InvasiveInsectsTab() {
     var agconditions = `WHERE commodity = 'All Commodities-All'`;
     var aglocconditions = '';
     if (options.state.length !== 0 && !options.state.includes('All') ) {
+      optionString1 += `State: ${options.state}; `;
+      optionString2 += `State: ${options.state}; `;
+      optionString3 += `State: ${options.state}; `;
       for (let i in options.state) {
         if (i > 0) {
           conditions = `${conditions} OR obsstate = '${options.state[i]}'`;
@@ -318,6 +323,8 @@ function InvasiveInsectsTab() {
           aglocconditions += ` AND (state_name = '${options.state[i]}'`;
         }
         if (options.county.length !== 0 && !options.county.includes('All')) {
+          optionString1 += `County: ${options.county}; `;
+          optionString3 += `County: ${options.county}; `;
           for (let i in options.county) {
             if (i > 0) {
               conditions = `${conditions} OR obscounty = '${options.county[i]}'`
@@ -336,6 +343,8 @@ function InvasiveInsectsTab() {
       aglocconditions += ')';
     }
     if (options.order.length !== 0 && !options.order.includes('All')) {
+      optionString1 += `Order: ${options.order}; `;
+      optionString3 += `Order: ${options.order}; `;
       for (let i in options.order) {
         if (i > 0) {
           invasiveconditions += ` OR insect_order = '${options.order[i]}'`;
@@ -344,10 +353,14 @@ function InvasiveInsectsTab() {
         }
       }
       if (options.family.length !== 0 && !options.family.includes('All')) {
+        optionString1 += `Family: ${options.family}; `;
+        optionString3 += `Family: ${options.family}; `;
         for (let i in options.family) {
           invasiveconditions += ` OR family = '${options.family[i]}'`;
           }
         if (options.genus.length !== 0 && !options.genus.includes('All')) {
+          optionString1 += `Genus: ${options.genus}; `;
+          optionString3 += `Genus: ${options.genus}; `;
           for (let i in options.genus) {
             invasiveconditions += ` OR genus = '${options.genus[i]}'`;
           }
@@ -355,14 +368,25 @@ function InvasiveInsectsTab() {
       }
       invasiveconditions += ')';
     }
-
+    var proxyDataType = '';
+    if (options.dataType === '') {
+      proxyDataType = 'Cash Receipts'
+    } else {
+      proxyDataType = `${options.dataType}`
+    }
+    optionString2 += `Data Type: ${proxyDataType}; `;
+    optionString3 += `Data Type: ${proxyDataType}; `;
     if (options.dataType === "Cash Receipts" && !options.incomeCategory.includes('All Commodities-All')) {
       agconditions = `WHERE commodity = '${options.incomeCategory[0]}'`;
+      optionString2 += `Commodity: ${options.incomeCategory}; `;
+      optionString3 += `Commodity: ${options.incomeCategory}; `;
     }
     else if (options.dataType === "Inventory Change") {
       agtable = 'inventory_change_value';
-      if (agconditions !== '' && !options.incomeCategory.includes('All commodities')) {
+      if (agconditions !== '' && !options.incomeCategory.includes('All commodities') && options.incomeCategory.length !== 0) {
         agconditions = `WHERE sector = '${options.incomeCategory[0]}'`;
+        optionString2 += `Sector: ${options.incomeCategory}; `;
+        optionString3 += `Sector: ${options.incomeCategory}; `;
       }
       else {
         agconditions = `WHERE sector = 'All commodities'`
@@ -370,18 +394,23 @@ function InvasiveInsectsTab() {
     }
     else if (options.dataType === "Intermediate Product Expenses") {
       agtable = 'intermediate_product_expense'
+      if (options.incomeCategory.length !== 0) {
+        optionString2 += `Category: ${options.incomeCategory}; `;
+        optionString3 += `Category: ${options.incomeCategory}; `;
       for (let i in options.incomeCategory) {
-        if (i > 0) {
-          agconditions += ` OR ip_category = '${options.incomeCategory[i]}'`;
-        } else {
-          agconditions = `WHERE ip_category = '${options.incomeCategory[i]}'`;
+          if (i > 0) {
+            agconditions += ` OR ip_category = '${options.incomeCategory[i]}'`;
+          } else {
+            agconditions = `WHERE ip_category = '${options.incomeCategory[i]}'`;
+          }
         }
-      }
-      if (!agconditions.includes('WHERE')) {
-        agconditions = `WHERE ip_category != ''`;
+      } else { 
+        agconditions = `WHERE ip_category != ' '`;
       }
     }
-
+    optionString1 = optionString1.slice(0, -2);
+    optionString2 = optionString2.slice(0, -2);
+    optionString3 = optionString3.slice(0, -2);
     
     var queryText1 = `WITH dates(dateIntervals) AS (
       SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
@@ -414,7 +443,7 @@ function InvasiveInsectsTab() {
       ),
       agdatabystate(year, summedData) AS (
         SELECT year,  ( SUM(value) / (gdp_deflator / 100) )
-            FROM ${agtable}
+            FROM "MIRANDABARNES".${agtable}
             ${agconditions}${aglocconditions}
             GROUP BY year, gdp_deflator
       ),
@@ -448,20 +477,20 @@ function InvasiveInsectsTab() {
         for (let i in response.data) {
           dataParsed1.push({
             date: response.data[i][0],
-            invasivesPerThousand: response.data[i][1],
+            datakey: response.data[i][1],
           });
           dataParsed2.push({
             date: response.data[i][0],
-            usDollars: response.data[i][2],
+            datakey: response.data[i][2],
           });
           dataParsed3.push({
             date: response.data[i][0],
-            usDollarsPerNormalizedInvasiveObservation: response.data[i][3],
+            datakey: response.data[i][3],
           });
         }
-        setData1(dataParsed1);
-        setData2(dataParsed2);
-        setData3(dataParsed3);
+        setData1(prevHistory => [...prevHistory, {dataarray: dataParsed1, lilid: optionString1}]);
+        setData2(prevHistory => [...prevHistory, {dataarray: dataParsed2, lilid: optionString2}]);
+        setData3(prevHistory => [...prevHistory, {dataarray: dataParsed3, lilid: optionString3}]);
       });
   };
 
@@ -596,6 +625,7 @@ function InvasiveInsectsTab() {
              ))}
             </select>
           </label>
+          <br />
           <label>
             Select Category:
             <select
@@ -744,11 +774,15 @@ function InvasiveInsectsTab() {
         </div>
         <hr style={{ margin: "20px 0" }} />
         <button
-          onClick={() => {
-            generateGraph(options);
-          }}
+          onClick={() => {generateGraph(options);}}
         >
           Generate Graphs
+        </button>
+        <br />
+        <button
+          onClick={() => {clearCharts();}}
+        >
+          Clear Graphs
         </button>
       </fieldset>
       <div
@@ -760,7 +794,6 @@ function InvasiveInsectsTab() {
           overflowY: "scroll",
         }}
       >
-        {data1 && (
           <div style={{ alignContent: "center" }}>
             <h2>Normalized Invasive Species Observations (Per Thousand Insects)</h2>
             <br />
@@ -768,7 +801,7 @@ function InvasiveInsectsTab() {
               <LineChart
                 width={800}
                 height={500}
-                data={data1}
+                data={transformDataForRecharts(data1)}
                 margin={{
                   top: 20,
                   right: 20,
@@ -792,25 +825,32 @@ function InvasiveInsectsTab() {
                 </YAxis>
                 <Tooltip />
                 <Legend
-                  layout="vertical"
-                  verticalAlign="top"
-                  align="right"
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="bottom"
                   height={36}
                 />
-                {lines(data1)}
-              </LineChart>
+                {data1.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
+                </LineChart>
             </div>
           </div>
-        )}
-        {data2 && (
-          <div style={{ alignContent: "center" }}>
-            <h2>Farm Financial Data</h2>
+        
+        <div style={{ alignContent: "center" }}>
+            <h2>Farm Income/Expense Data</h2>
             <br />
             <div style={{ display: "inline-block" }}>
               <LineChart
                 width={800}
                 height={500}
-                data={data2}
+                data={transformDataForRecharts(data2)}
                 margin={{
                   top: 20,
                   right: 20,
@@ -828,23 +868,29 @@ function InvasiveInsectsTab() {
                     fill: "black",
                   }}
                   position={"left"}
-                  offset={20}
+                  offset={50}
                   angle={270} 
                   value={"US Dollars"} />
                 </YAxis>
               <Tooltip />
               <Legend
-                layout="vertical"
-                verticalAlign="top"
-                align="right"
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="bottom"
                 height={36}
               />
-              {lines(data2)}
+              {data2.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
             </LineChart>
           </div>
         </div>
-      )}
-      {data3 && (
         <div style={{ alignContent: "center" }}>
           <h2>Dollars Per Normalized Observation</h2>
           <br />
@@ -852,7 +898,7 @@ function InvasiveInsectsTab() {
             <LineChart
               width={800}
               height={500}
-              data={data3}
+              data={transformDataForRecharts(data3)}
               margin={{
                 top: 20,
                 right: 20,
@@ -870,22 +916,29 @@ function InvasiveInsectsTab() {
                     fill: "black",
                   }}
                   position={"left"}
-                  offset={20}
+                  offset={50}
                   angle={270} 
-                  value={"Dollars Per Normalized Observation"} />
+                  value={"USD Per Normalized Observation"} />
                 </YAxis>
               <Tooltip />
               <Legend
-                layout="vertical"
-                verticalAlign="top"
-                align="right"
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="bottom"
                 height={36}
               />
-              {lines(data3)}
+              {data3.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
             </LineChart>
           </div>
         </div>
-      )}
     </div>
     <br />
   </div>
