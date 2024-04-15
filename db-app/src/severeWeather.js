@@ -33,6 +33,8 @@ function SevereWeatherTab() {
   const resolution = ["By Year", "By Month"];
   const fatalityType = ["ALL", "D", "I"];
   const sex = ["ALL", "M", "F", "UNKNOWN"];
+
+  const [lineColors, setLineColors] = useState([]);
   //loading data into the displays
   if (eventTypes.length === 1) {
     setEventTypes(["Loading...", "..."]);
@@ -133,13 +135,18 @@ function SevereWeatherTab() {
       }));
     }
   };
-  const getRandomColor = () => {
-    return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
+  const getRandomColor = (val) => {
+    let temp = val % 16;
+    for (let i = 0; i < 3; i++) {
+      temp += (Math.random() * 0xf) << (4 + 4 * i);
+    }
+    return "#" + temp.toString(16).padStart(6, "0");
   };
   const clearCharts = () => {
     setData1(null);
     setData2(null);
     setData3(null);
+    setLineColors([]);
   };
   //generate the individual lines
   const lines = (dat) => {
@@ -153,12 +160,12 @@ function SevereWeatherTab() {
     }, []);
     const filtered = flattened.filter((key) => key !== "date");
     const uniqueKeys = [...new Set(filtered)];
-    return uniqueKeys.map((key) => {
+    return uniqueKeys.map((key, idx) => {
       return (
         <Line
           name={key}
           type="monotone"
-          stroke={getRandomColor()}
+          stroke={lineColors[idx]}
           dataKey={key}
           dot={false}
         />
@@ -197,6 +204,7 @@ function SevereWeatherTab() {
         conditions = `${conditions} AND (${eventCondition})`;
       }
     }
+    setLineColors([...lineColors, getRandomColor(lineColors.length)]);
     const queryText1 = `WITH dates(yearMonth) AS (
       SELECT to_char(BEGIN_DATE_TIME,'${timeformat}') FROM "JASON.LI1".STORM_EVENT 
       WHERE BEGIN_DATE_TIME >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
@@ -554,6 +562,18 @@ function SevereWeatherTab() {
           }}
         >
           Clear Graphs
+        </button>
+        <br />
+        <button
+          onClick={() => {
+            let temp = [];
+            for (let i in lineColors) {
+              temp.push(getRandomColor(i));
+            }
+            setLineColors(temp);
+          }}
+        >
+          Change Line Colors
         </button>
       </fieldset>
       <div
