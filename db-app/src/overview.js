@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const totaltupletext =
-  'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty)';
+  'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".housing_price_index_city) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".housing_price_index_state) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".municipality) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".quarterly_precipitation) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".weather_station))';
 
 async function totalTupleGetter() {
   axios
@@ -30,7 +30,12 @@ function OverviewPage() {
         );
         break;
       case "Temperature-Dependent Mortality":
-        setPreview("Mortality Preview/Summary");
+        setPreview("This page fetches and displays data related to average temperature and mortality rates based on user-selected criteria such\n" +
+         "as state, county, year, and age group. The years selectable range from 1979 to 2015 and all of the data is gathered from the\n" +
+         "United States. It uses Recharts to visualize the data with line charts. Users can select criteria, view the data in tables, and see the corresponding\n" +
+         "charts for temperature and mortality rates over time. Temperature is the average temperature of selected state(s)/county(ies) and mortality rate is the\n" +
+         "calculated crude death rate from the data: Crude Rates are expressed as the number of deaths reported each calendar year per 100,000 population, reporting\n" +
+         "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000.");
         break;
       case "Invasive Insects":
         setPreview("Invasive Insects Preview/Summary");
