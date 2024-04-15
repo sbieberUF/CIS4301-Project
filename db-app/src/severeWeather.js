@@ -85,7 +85,11 @@ function SevereWeatherTab() {
   };
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (value === "-----------") {
+    if (
+      value === "-----------" ||
+      (data1 &&
+        (name === "resolution" || name === "startDate" || name === "endDate"))
+    ) {
       return;
     }
     if (name === "stateCounty") {
@@ -131,6 +135,11 @@ function SevereWeatherTab() {
   };
   const getRandomColor = () => {
     return "#" + ((Math.random() * 0xffff) << 0).toString(16).padStart(6, "0");
+  };
+  const clearCharts = () => {
+    setData1(null);
+    setData2(null);
+    setData3(null);
   };
   //generate the individual lines
   const lines = (dat) => {
@@ -204,6 +213,11 @@ function SevereWeatherTab() {
   LEFT JOIN eventList ON eventList.yearMonth = dates.yearMonth 
   GROUP BY dates.yearMonth ORDER BY dates.yearMonth`;
     console.log(queryText1);
+    var stateStats =
+      options.stateCounty.length === 0 ? "All" : options.stateCounty.toString();
+    var eventStats =
+      options.stormEvent.length === 0 ? "All" : options.stormEvent.toString();
+    var queryName = `State(s): ${stateStats}; Event(s): ${eventStats}; Ages: ${options.maxAge}-${options.minAge}; Fatality Type: ${options.fatalityType}; Sex: ${options.sex}`;
     axios
       .get(`http://localhost:5001/?query=${encodeURIComponent(queryText1)}`, {
         crossdomain: true,
@@ -212,11 +226,20 @@ function SevereWeatherTab() {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
-        for (let i in response.data) {
-          dataParsed.push({
-            date: response.data[i][0],
-            total: response.data[i][1],
-          });
+        if (!data1) {
+          for (let i in response.data) {
+            dataParsed.push({
+              date: response.data[i][0],
+              [queryName]: response.data[i][1],
+            });
+          }
+        } else {
+          for (let i in response.data) {
+            dataParsed.push({
+              ...data1[i],
+              [queryName]: response.data[i][1],
+            });
+          }
         }
         setData1(dataParsed);
       });
@@ -258,11 +281,20 @@ function SevereWeatherTab() {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
-        for (let i in response.data) {
-          dataParsed.push({
-            date: response.data[i][0],
-            total: response.data[i][1],
-          });
+        if (!data2) {
+          for (let i in response.data) {
+            dataParsed.push({
+              date: response.data[i][0],
+              [queryName]: response.data[i][1],
+            });
+          }
+        } else {
+          for (let i in response.data) {
+            dataParsed.push({
+              ...data2[i],
+              [queryName]: response.data[i][1],
+            });
+          }
         }
         setData2(dataParsed);
       });
@@ -294,11 +326,20 @@ function SevereWeatherTab() {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed = [];
-        for (let i in response.data) {
-          dataParsed.push({
-            date: response.data[i][0],
-            total: response.data[i][1],
-          });
+        if (!data3) {
+          for (let i in response.data) {
+            dataParsed.push({
+              date: response.data[i][0],
+              [queryName]: response.data[i][1],
+            });
+          }
+        } else {
+          for (let i in response.data) {
+            dataParsed.push({
+              ...data3[i],
+              [queryName]: response.data[i][1],
+            });
+          }
         }
         setData3(dataParsed);
       });
@@ -402,6 +443,7 @@ function SevereWeatherTab() {
               onChange={handleChange}
               min="1950-01-01"
               max="2023-12-31"
+              disabled={data1}
             />
             <br />
             End Date:
@@ -413,6 +455,7 @@ function SevereWeatherTab() {
               onChange={handleChange}
               min="1950-01-01"
               max="2023-12-31"
+              disabled={data1}
             />
           </label>
           <br />
@@ -422,6 +465,7 @@ function SevereWeatherTab() {
               name="resolution"
               value={options.resolution}
               onChange={handleChange}
+              disabled={data1}
             >
               {resolution.map((option) => (
                 <option key={option} value={option}>
@@ -430,6 +474,12 @@ function SevereWeatherTab() {
               ))}
             </select>
           </label>
+          {data1 && (
+            <b style={{ margin: "0", color: "DarkRed" }}>
+              <br />
+              Clear Graphs to reconfigure date and resolution settings
+            </b>
+          )}
           <br />
         </div>
         <div>
@@ -498,6 +548,13 @@ function SevereWeatherTab() {
         >
           Generate Graphs
         </button>
+        <button
+          onClick={() => {
+            clearCharts();
+          }}
+        >
+          Clear Graphs
+        </button>
       </fieldset>
       <div
         className="graphs"
@@ -528,12 +585,7 @@ function SevereWeatherTab() {
                 <XAxis dataKey="date" />
                 <YAxis domain={["dataMin", "dataMax"]} />
                 <Tooltip />
-                <Legend
-                  layout="vertical"
-                  verticalAlign="top"
-                  align="right"
-                  height={36}
-                />
+                <Legend layout="vertical" verticalAlign="bottom" height={36} />
                 {lines(data1)}
               </LineChart>
             </div>
@@ -559,12 +611,7 @@ function SevereWeatherTab() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Legend
-                  layout="vertical"
-                  verticalAlign="top"
-                  align="right"
-                  height={36}
-                />
+                <Legend layout="vertical" verticalAlign="bottom" height={36} />
                 {lines(data2)}
               </LineChart>
             </div>
@@ -590,12 +637,7 @@ function SevereWeatherTab() {
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Legend
-                  layout="vertical"
-                  verticalAlign="top"
-                  align="right"
-                  height={36}
-                />
+                <Legend layout="vertical" verticalAlign="bottom" height={36} />
                 {lines(data3)}
               </LineChart>
             </div>
