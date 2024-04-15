@@ -3,9 +3,11 @@ import OverviewPage from "./overview";
 import TemperatureDependentMortalityPage from "./tempMortality";
 import InvasiveInsectsTab from "./invasiveInsects.js";
 import SevereWeatherTab from "./severeWeather.js";
+import HousingIndexTab from "./housingIndex.js";
 import GovernmentSpending from "./governmentSpending.js";
-
 import SimpsonTab from "./simpson.js";
+
+
 import "./App.css";
 
 function App() {
@@ -54,13 +56,6 @@ function App() {
   );
 }
 
-// function SevereWeatherTab() {
-//   return <div>Severe Weather Page</div>;
-// }
-
-function HousingIndexTab() {
-  return <div>Housing Index</div>;
-}
 
 export default App;
 //Run 'npm start' to run it
