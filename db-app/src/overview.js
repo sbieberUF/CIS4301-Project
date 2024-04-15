@@ -1,20 +1,30 @@
 import React, { useState } from "react";
 import axios from "axios";
+import loadingGif from './loadingBar2.gif'; 
 
+const OverviewPage = () => {
 const totaltupletext =
   'SELECT SUM(c) FROM (SELECT COUNT(*) AS c FROM MIRANDABARNES.observation UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.cash_receipt UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.insect UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.intermediate_product_expense UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.inventory_change_value UNION SELECT COUNT(*) AS c FROM MIRANDABARNES.state UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".co2_emission UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".country_data UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".policy_expenditure_datum UNION SELECT COUNT(*) AS c FROM "A.KUMAWAT".population_datum UNION SELECT COUNT(*) AS c FROM "JASON.LI1".counties UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_event UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_fatality UNION SELECT COUNT(*) AS c FROM "JASON.LI1".storm_loc UNION SELECT COUNT(*) AS c FROM "SBIEBER".avgtemperaturebystatecounty UNION SELECT COUNT(*) AS c FROM "SBIEBER".mortalitybystatecounty UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".housing_price_index_city) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".housing_price_index_state) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".municipality) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".quarterly_precipitation) UNION (SELECT COUNT(*) AS c FROM "RRODRIGUEZ7".weather_station))';
 
-async function totalTupleGetter() {
-  axios
-    .get(`http://localhost:5001/?query=${encodeURIComponent(totaltupletext)}`, {
-      crossdomain: true,
-    })
-    .then((response) => {
-      alert("Total Number of Tuples: " + response.data);
-    });
-}
+  const [loading, setLoading] = useState(false);
+  const [tuplesCount, setTuplesCount] = useState('');
 
-function OverviewPage() {
+async function totalTupleGetter() {
+    setLoading(true);
+    axios
+      .get(`http://localhost:5001/?query=${encodeURIComponent(totaltupletext)}`, {
+        crossdomain: true,
+      })
+      .then((response) => {
+        setTuplesCount(`Total Number of Tuples: ${response.data.toLocaleString()}`);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching data: ', error);
+        setLoading(false);
+      });
+  }
+
   const [preview, setPreview] = useState("");
 
   const showPreview = (tab) => {
@@ -117,12 +127,14 @@ function OverviewPage() {
         tuples assimilated into the database can be obtained using the button
         below.{" "}
       </p>
-      <button onClick={() => totalTupleGetter()}>
-        {" "}
+      <button onClick={totalTupleGetter}>
         Fetch Total Number of Tuples
       </button>
+      {loading && <div><img src={loadingGif} alt="Loading..." style={{ height: '80px' }} /></div>}
+      {!loading && tuplesCount && <div>{tuplesCount}</div>}
     </div>
   );
+
 }
 
 export default OverviewPage;
