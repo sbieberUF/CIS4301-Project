@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart } from "recharts";
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, ReferenceLine } from "recharts";
+import { format } from 'date-fns';
 
 function HousingPriceIndexTab() {
   const [states, setStates] = useState([]);
@@ -8,10 +9,17 @@ function HousingPriceIndexTab() {
   const [housingData, setHousingData] = useState([]);
   const [precipitationData, setPrecipitationData] = useState([]);
   const [excludeOutliers, setExcludeOutliers] = useState(false);
+  const [averagePrecipitation, setAveragePrecipitation] = useState(0);
+  const lineColors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#a4de6c', '#d0ed57', '#8dd1e1', '#83a6ed', '#8884d8', '#82ca9d'];
 
   useEffect(() => {
     fetchStates();
   }, []);
+
+  const formatXAxisTick = (tickItem) => {
+
+    return format(new Date(tickItem, 0, 1), 'yyyy');
+  };
 
   const fetchStates = async () => {
     const statesQuery = 'SELECT DISTINCT state_name FROM state ORDER BY state_name';
@@ -52,7 +60,9 @@ function HousingPriceIndexTab() {
         year, index_value, quarter, stateName: state_name
       }));
 
-      const averagePrecipitation = precipitationResponse.data.reduce((acc, { amount }) => acc + amount, 0) / precipitationResponse.data.length;
+      const totalPrecipitation = precipitationResponse.data.reduce((acc, { amount }) => acc + amount, 0);
+      const newAveragePrecipitation = totalPrecipitation / precipitationResponse.data.length;
+      setAveragePrecipitation(newAveragePrecipitation);
 
       const formattedPrecipitationData = precipitationResponse.data.map((item) => {
         const [quarter, amount, precipitation_year, state_name] = item;
@@ -62,13 +72,48 @@ function HousingPriceIndexTab() {
           precipitation_year,
           stateName: state_name
         };
-      }).filter(({ amount }) => amount >= 0 && (!excludeOutliers || !isOutlier(amount, averagePrecipitation)));
+      }).filter(({ amount }) => amount >= 0 && (!excludeOutliers || !isOutlier(amount, newAveragePrecipitation)));
 
       console.log("Housing Data: ", formattedHousingData);
       console.log("Precipitation Data: ", formattedPrecipitationData);
 
-      setHousingData(formattedHousingData);
-      setPrecipitationData(formattedPrecipitationData);
+      let housingConsolidated = {};
+      housingResponse.data.forEach(([year, index_value, quarter, state_name]) => {
+        const key = `${year}-${quarter}`;
+        if (!housingConsolidated[key]) {
+          housingConsolidated[key] = { year, quarter };
+        }
+        housingConsolidated[key][`housingIndex_${state_name}`] = index_value;
+      });
+
+
+      let precipitationConsolidated = {};
+      precipitationResponse.data.forEach(([quarter, amount, precipitation_year, state_name]) => {
+        const key = `${precipitation_year}-${quarter}`;
+        if (!precipitationConsolidated[key]) {
+          precipitationConsolidated[key] = { precipitation_year, quarter };
+        }
+        precipitationConsolidated[key][`precipitationAmount_${state_name}`] = amount;
+      });
+
+
+      const housingDataArray = Object.values(housingConsolidated)
+        .map(data => ({ ...data, year: `${data.year}` }))
+        .filter(data => {
+          const values = selectedStates.map(state => data[`housingIndex_${state}`]);
+          return values.every(value => value >= 0);
+        });
+      const precipitationDataArray = Object.values(precipitationConsolidated)
+        .map(data => ({ ...data, precipitation_year: `${data.precipitation_year}` }))
+        .filter(data => {
+          const values = selectedStates.map(state => data[`precipitationAmount_${state}`]);
+
+          return values.every(value => value >= 0 && (!excludeOutliers || !isOutlier(value, averagePrecipitation)));
+        });
+
+
+      setHousingData(housingDataArray);
+      setPrecipitationData(precipitationDataArray);
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -101,37 +146,40 @@ function HousingPriceIndexTab() {
       <button onClick={fetchData}>Load Data</button>
 
       <LineChart width={600} height={300} data={housingData}>
-        <XAxis dataKey="year" />
+        <XAxis dataKey="year" tickFormatter={formatXAxisTick} />
         <YAxis />
         <Tooltip />
         <CartesianGrid stroke="#ccc" />
         <Legend />
-        {selectedStates.map(state => (
-          <Line key={state} type="monotone" dataKey="index_value" stroke="#8884d8" data={housingData.filter(data => data.stateName === state)} name={`Housing Index - ${state}`} />
+        {selectedStates.map((state, index) => (
+          <Line
+            key={state}
+            type="monotone"
+            dataKey={`housingIndex_${state}`}
+            stroke={lineColors[index % lineColors.length]}
+            name={`Housing Index - ${state}`}
+          />
         ))}
       </LineChart>
 
       <LineChart width={600} height={300} data={precipitationData}>
-        <XAxis dataKey="precipitation_year" />
+        <XAxis dataKey="precipitation_year" tickFormatter={formatXAxisTick} />
         <YAxis />
         <Tooltip />
         <CartesianGrid stroke="#ccc" />
         <Legend />
-        {selectedStates.map(state => (
+        {selectedStates.map((state, index) => (
           <Line
             key={state}
             type="monotone"
-            dataKey="amount"
-            stroke="#82ca9d"
-            data={precipitationData.filter(data => data.stateName === state)}
+            dataKey={`precipitationAmount_${state}`}
+            stroke={lineColors[index % lineColors.length]}
             name={`Precipitation - ${state}`}
           />
         ))}
       </LineChart>
 
-
     </div>
   );
 }
-
 export default HousingPriceIndexTab;
