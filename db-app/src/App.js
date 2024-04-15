@@ -3,6 +3,8 @@ import OverviewPage from "./overview";
 import TemperatureDependentMortalityPage from "./tempMortality";
 import InvasiveInsectsTab from "./invasiveInsects.js";
 import SevereWeatherTab from "./severeWeather.js";
+import GovernmentSpending from "./governmentSpending.js";
+
 import "./App.css";
 
 function App() {
@@ -43,7 +45,7 @@ function App() {
         )}
         {activeTab === "Invasive Insects" && <InvasiveInsectsTab />}
         {activeTab === "Housing Index" && <HousingIndexTab />}
-        {activeTab === "Government Spending" && <GovernmentSpendingTab />}
+        {activeTab === "Government Spending" && <GovernmentSpending />}
       </div>
     </div>
   );
@@ -55,10 +57,6 @@ function App() {
 
 function HousingIndexTab() {
   return <div>Housing Index</div>;
-}
-
-function GovernmentSpendingTab() {
-  return <div>Government Spending</div>;
 }
 
 export default App;
