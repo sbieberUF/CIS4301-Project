@@ -15,6 +15,7 @@ function HousingPriceIndexTab() {
   const [selectedMunicipalities, setSelectedMunicipalities] = useState([]);
   const [years, setYears] = useState([]);
   const [selectedYears, setSelectedYears] = useState([]);
+  const [tableData, setTableData] = useState([]);
 
   useEffect(() => {
     fetchStates();
@@ -41,12 +42,11 @@ function HousingPriceIndexTab() {
     try {
       const { data } = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(municipalitiesQuery)}`);
       setMunicipalities(data);
-      setSelectedMunicipalities([]);  // Clear previously selected municipalities
+      setSelectedMunicipalities([]);
     } catch (error) {
       console.error("Error fetching municipalities:", error);
     }
   };
-
 
   const fetchYears = async (state, municipality) => {
     if (!state) return;
@@ -54,41 +54,52 @@ function HousingPriceIndexTab() {
     let yearsQuery = `SELECT DISTINCT hs.year FROM housing_price_index_state hs`;
 
     if (municipality) {
-        yearsQuery += ` INNER JOIN municipality mp ON hs.state_name = mp.state_name 
+      yearsQuery += ` INNER JOIN municipality mp ON hs.state_name = mp.state_name 
                        WHERE hs.state_name = '${state}' AND mp.municipality_name = '${municipality}'`;
     } else {
-        yearsQuery += ` WHERE hs.state_name = '${state}'`;
+      yearsQuery += ` WHERE hs.state_name = '${state}'`;
     }
 
     yearsQuery += ' ORDER BY hs.year';
 
     try {
-        const response = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(yearsQuery)}`);
-        if (response && response.data && Array.isArray(response.data)) {
-          console.log('Response:', response.data)
-            //const years = response.data.map(item => item.year).filter(year => typeof year === 'number');
-            setYears(response.data);
-            console.log('Years:', years);
-        } else {
-            console.error("Invalid response format:", response);
-        }
+      const response = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(yearsQuery)}`);
+      if (response && response.data && Array.isArray(response.data)) {
+        console.log('Response:', response.data)
+        //const years = response.data.map(item => item.year).filter(year => typeof year === 'number');
+        setYears(response.data);
+        console.log('Years:', years);
+      } else {
+        console.error("Invalid response format:", response);
+      }
     } catch (error) {
-        console.error("Error fetching years:", error);
+      console.error("Error fetching years:", error);
     }
-};
-
-
-
+  };
 
   const fetchData = async () => {
     if (selectedStates.length === 0) return;
 
     const housingQuery = `
-      SELECT year, index_value, quarter, state_name
-      FROM housing_price_index_state
-      WHERE state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})
-      ORDER BY year, quarter
-    `;
+    SELECT 
+      DISTINCT hpic.year, 
+      hpic.quarter, 
+      hpic.index_value, 
+      hpic.state_name,
+      m.municipality_name
+    FROM 
+      housing_price_index_city hpic
+    JOIN 
+      municipality m ON hpic.municipality_name = m.municipality_name AND hpic.state_name = m.state_name
+    JOIN 
+      weather_station ws ON m.municipality_name = ws.municipality_name AND m.state_name = ws.state_name
+    JOIN 
+      quarterly_precipitation qp ON ws.station_id = qp.station_id AND hpic.year = qp.precipitation_year
+    WHERE 
+      hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})
+    ORDER BY 
+      hpic.year, hpic.quarter
+  `;
 
     const precipitationQuery = `
       SELECT qp.quarter, qp.amount, qp.precipitation_year, ws.state_name
@@ -103,10 +114,15 @@ function HousingPriceIndexTab() {
         axios.get(`http://localhost:5001/?query=${encodeURIComponent(housingQuery)}`),
         axios.get(`http://localhost:5001/?query=${encodeURIComponent(precipitationQuery)}`)
       ]);
+      console.log('Housing Response:', housingResponse.data);
       console.log('Precipitation Response:', precipitationResponse.data);
 
-      const formattedHousingData = housingResponse.data.map(([year, index_value, quarter, state_name]) => ({
-        year, index_value, quarter, stateName: state_name
+      const formattedHousingData = housingResponse.data.map(([year, quarter, index_value, state_name, municipality_name]) => ({
+        year,
+        quarter,
+        index_value,
+        stateName: state_name,
+        municipalityName: municipality_name,
       }));
 
       const totalPrecipitation = precipitationResponse.data.reduce((acc, { amount }) => acc + amount, 0);
@@ -127,7 +143,7 @@ function HousingPriceIndexTab() {
       console.log("Precipitation Data: ", formattedPrecipitationData);
 
       let housingConsolidated = {};
-      housingResponse.data.forEach(([year, index_value, quarter, state_name]) => {
+      housingResponse.data.forEach(([year, quarter, index_value, state_name]) => {
         const key = `${year}-${quarter}`;
         if (!housingConsolidated[key]) {
           housingConsolidated[key] = { year, quarter };
@@ -160,6 +176,14 @@ function HousingPriceIndexTab() {
           return values.every(value => value >= 0 && (!excludeOutliers || !isOutlier(value, averagePrecipitation)));
         });
 
+      const formattedTableData = housingResponse.data.map(([year, quarter, index_value, state_name, municipality_name]) => ({
+        year,
+        state: state_name,
+        housingIndex: index_value,
+        municipality: municipality_name,
+      }));
+
+      setTableData(formattedTableData);
 
       setHousingData(housingDataArray);
       setPrecipitationData(precipitationDataArray);
@@ -180,16 +204,13 @@ function HousingPriceIndexTab() {
     setSelectedStates(selectedValues);
 
     if (selectedValues.length > 0) {
-      const selectedState = selectedValues[0]; // Assuming single state selection for simplicity
+      const selectedState = selectedValues[0];
       fetchMunicipalities(selectedState);
-      fetchYears(selectedState); // No municipality passed, assuming state-level years
+      fetchYears(selectedState);
     } else {
-      // Clear the years if no state is selected
       setYears([]);
     }
   };
-
-
 
   const isOutlier = (value, average) => Math.abs(value) > 5 * average; // TODO: Tweak outlier detection calculation
 
@@ -262,15 +283,18 @@ function HousingPriceIndexTab() {
         <thead>
           <tr>
             <th>Year</th>
-            
-            {/* Include other required headers */}
+            <th>State</th>
+            <th>Housing Index</th>
+            <th>Municipality</th>
           </tr>
         </thead>
         <tbody>
-          {housingData.map((data, index) => (
+          {tableData.map((data, index) => (
             <tr key={index}>
               <td>{data.year}</td>
-              {/* Render other data columns */}
+              <td>{data.state}</td>
+              <td>{data.housingIndex}</td>
+              <td>{data.municipality}</td>
             </tr>
           ))}
         </tbody>
