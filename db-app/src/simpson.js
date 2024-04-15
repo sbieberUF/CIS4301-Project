@@ -46,6 +46,7 @@ function SimpsonTab() {
   };
   const dateIntervals = ["Daily", "Monthly", "Yearly", "Every Five Years"];
   const orders = ['All',
+    "Archaeognatha",
     "Blattodea",
     "Coleoptera",
     "Dermaptera",
@@ -55,10 +56,20 @@ function SimpsonTab() {
     "Hymenoptera",
     "Lepidoptera",
     "Mantodea",
+    "Mecoptera",
+    "Megaloptera",
+    "Neuroptera",
     "Odonata",
     "Orthoptera",
+    "Phasmida",
+    "Plecoptera",
+    "Psocodea",
+    "Raphidioptera",
     "Siphonaptera",
+    "Strepsiptera",
     "Thysanoptera",
+    "Trichoptera",
+    "Zygentoma"
 ];
   const [families, setFamilies] = useState([]);
   const populateFamilies = async () => {
@@ -348,13 +359,13 @@ function SimpsonTab() {
   };
 
   return (
-    <div style={{ display: "block", paddingBottom: "50px" }}>
+    <div style={{ display: "block", paddingBottom: "100px" }}>
       <fieldset
         className="settings"
         style={{
           display: "inline-block",
           width: "25%",
-          height: "550px",
+          height: "450px",
           overflowY: "scroll",
         }}
       >
@@ -616,7 +627,7 @@ function SimpsonTab() {
               >
                 <CartesianGrid stroke="#f5f5f5" />
                 <XAxis dataKey="date" />
-                <YAxis domain={["dataMin", "dataMax"]}>
+                <YAxis domain={[0, 1]}>
                 <Label
                   style={{
                     textAnchor: "middle",

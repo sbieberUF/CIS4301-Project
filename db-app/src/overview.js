@@ -33,7 +33,7 @@ function OverviewPage() {
       case "Temperature-Dependent Mortality":
         setPreview("This page fetches and displays data related to average temperature and mortality rates based on user-selected criteria such\n" +
          "as state, county, year, and age group. The years selectable range from 1979 to 2015 and all of the data is gathered from the\n" +
-         "United States. It uses Recharts to visualize the data with line charts. Users can select criteria, view the data in tables, and see the corresponding\n" +
+         "United States. Users can select criteria, view the data in tables, and see the corresponding\n" +
          "charts for temperature and mortality rates over time. Temperature is the average temperature of selected state(s)/county(ies) and mortality rate is the\n" +
          "calculated crude death rate from the data: Crude Rates are expressed as the number of deaths reported each calendar year per 100,000 population, reporting\n" +
          "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000. " +
@@ -48,12 +48,20 @@ function OverviewPage() {
         "and the Economic Research Service of the U.S. Department of Agriculture.");
         break;
       case "Insect Diversity":
-        setPreview("This page is meant to allow users to use iNaturalist to gauge relative levels of diversity between different locations, specifically via Simpson's index.\n" +
+        setPreview("More diverse ecosytems are more likely to be robust to stressors and provide a wider array of important ecosystem services.\n" +
+        "This page is meant to allow users to use iNaturalist to gauge relative levels of diversity between different locations, specifically via Simpson's index.\n" +
         "This metric gets smaller the more diverse a population is. Users can determine how diverse their states/counties are relative to each other, as well as select\n" +
         "specific taxa whose level of diversity they want to assess in more detail. Data for this part of the application came from iNaturalist.");
         break;
       case "Housing Index":
-        setPreview("Housing Index Preview/Summary");
+        setPreview("This page examines the degree to which deviations from average precipitation (i.e., flooding and drought conditions) impact housing price index in different\n" +
+        "places in the United States over time. This should not only demonstrate how such events can affect property value, but also allow a user to answer questions about whether\n" +
+        "different localities are equally impacted by equivalent precipitation problems. The precipitation data comes from the National Centers for Environmental Information,\n" +
+        "and the housing index data is derived from a set made available by the  Federal Housing Finance Agency.");
+        break;
+      case "Government Spending":
+        setPreview("To move from analyses of impact to analyses of action, we also incorporate a final graph using a dataset from the International Monetary Fund regarding\n" +
+        "expenditures on environmental policies by different countries. Users can evaluate the amount that governments are spending on climate policy in their local currencies.");
         break;
       default:
         setPreview("");
@@ -95,19 +103,22 @@ function OverviewPage() {
       <hr style={{ borderTop: "3px solid #bbb" }}></hr>
       <div>
         <button onClick={() => showPreview("Severe Weather")}>
-          Severe Weather Preview/Summary
+          Severe Weather Summary
         </button>
         <button onClick={() => showPreview("Temperature-Dependent Mortality")}>
-          Mortality Preview/Summary
+          Mortality Summary
         </button>
         <button onClick={() => showPreview("Insect Diversity")}>
-          Invasive Diversity Preview/Summary
+          Insect Diversity Summary
         </button>
         <button onClick={() => showPreview("Invasive Insects")}>
-          Invasive Insects Preview/Summary
+          Invasive Insects Summary
         </button>
         <button onClick={() => showPreview("Housing Index")}>
-          Housing Index Preview/Summary
+          Housing Index Summary
+        </button>
+        <button onClick={() => showPreview("Government Spending")}>
+          Government Spending Summary
         </button>
       </div>
       {preview && <p>{preview}</p>}
