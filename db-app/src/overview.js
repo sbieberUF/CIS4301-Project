@@ -38,7 +38,12 @@ function OverviewPage() {
          "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000.");
         break;
       case "Invasive Insects":
-        setPreview("Invasive Insects Preview/Summary");
+        setPreview("This page is designed with the goal of a) determining the extent to which iNaturalist observations serve as an effective proxy for damage caused\n" +
+        "by different invasive insect pests by contrasting volume of normalized observations over a specified time frame to various measures of agricultural costs and\n" +
+        "output over that same time frame and b) where iNaturalist seems to prove an effective tool, examining the per dollar extent to which invasive insect occurrences\n" +
+        "in different locations affect various measures of output and expenses as a measure of resilience of different states/commodities/sectors, etc. to invasive insects\n" +
+        "Datasets for this part of the application are derived from iNaturalist, the Global Register of Introduced and Invasive Species - United States (Contiguous),\n" +
+        "and the Economic Research Service of the U.S. Department of Agriculture.");
         break;
       case "Housing Index":
         setPreview("Housing Index Preview/Summary");
