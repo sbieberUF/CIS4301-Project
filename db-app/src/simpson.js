@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import axios from "axios";
 
-function InvasiveInsectsTab() {
+function SimpsonTab() {
   const [options, setOptions] = useState({
     state: [],
     county: [],
@@ -21,13 +21,9 @@ function InvasiveInsectsTab() {
     order: [],
     family: [],
     genus: [],
-    dataType: '',
-    incomeCategory: []
   });
 
   const [data1, setData1] = useState([]);
-  const [data2, setData2] = useState([]);
-  const [data3, setData3] = useState([]);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
   const [counties, setCounties] = useState([]);
@@ -100,34 +96,6 @@ function InvasiveInsectsTab() {
       }
       setGenera(startingGenera);
   })};
-
-  const dataTypes = ["Cash Receipts", "Inventory Change", "Intermediate Product Expenses"];
-
-  const [incomeCategories, setIncomeCategories] = useState([]);
-  const populateCategories = async () => {
-    setIncomeCategories(["Loading..."]);
-    var startingCat = [];
-    var catQuery = '';
-    if (options.dataType === "Cash Receipts") {
-      catQuery = `SELECT DISTINCT commodity FROM "MIRANDABARNES".cash_receipt ORDER BY commodity`;
-    }
-    else if (options.dataType === "Inventory Change") {
-      catQuery = `SELECT DISTINCT sector FROM "MIRANDABARNES".inventory_change_value ORDER BY sector`
-    }
-    else if (options.dataType === "Intermediate Product Expenses") {
-      catQuery = `SELECT DISTINCT ip_category FROM "MIRANDABARNES".intermediate_product_expense ORDER BY ip_category`
-    }
-    axios
-    .get(`http://localhost:5001/?query=${encodeURIComponent(catQuery)}`, {
-      crossdomain: true,
-    })
-    .then((response) => {
-      console.log(response.data);
-      for (let i in response.data) {
-        startingCat.push(response.data[i]);
-      }
-      setIncomeCategories(startingCat);
-  })}
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -219,30 +187,7 @@ function InvasiveInsectsTab() {
         ...prevState,
         [name]: arr,
       }));
-    } else if (name === "incomeCategory") {
-      if (options.incomeCategory.includes(value)) {
-        return;
-      }
-      if (value === 'All') {
-        setOptions((prevState) => ({
-          ...prevState,
-          [name]: [],
-        }));
-        return;
-      }
-      arr = options.incomeCategory;
-      arr.push(value);
-      setOptions((prevState) => ({
-        ...prevState,
-        [name]: arr,
-      }));
-    } else if (name === "dataType") {
-      setOptions((prevState) => ({
-        ...prevState,
-        [name]: value,
-      }));
-      options.incomeCategory = [];
-    }  else {
+    } else {
       setOptions((prevState) => ({
         ...prevState,
         [name]: value,
@@ -265,8 +210,6 @@ function InvasiveInsectsTab() {
 
   const clearCharts = () => {
     setData1([]);
-    setData2([]);
-    setData3([]);
   }
 
   const transformDataForRecharts = (input) => {
@@ -289,10 +232,7 @@ function InvasiveInsectsTab() {
   const generateGraph = async (options) => {
     //format the string
     var optionString1 = ``;
-    var optionString2 = ``;
-    var optionString3 = ``;
     var timeformat = `observationdate, 'YYYY-MM-DD'`;
-    var timeformatag = `year`;
     if (options.dateInterval === "Monthly") {
       timeformat = `ROUND(observationdate, 'MONTH'), 'YYYY-MM'`;
     }
@@ -301,165 +241,90 @@ function InvasiveInsectsTab() {
     }
     else if (options.dateInterval === "Every Five Years") {
       timeformat = `(ROUND(TO_NUMBER(TO_CHAR(observationdate, 'YYYY'))/5)) * 5`;
-      timeformatag = `(ROUND(year / 5)) * 5`;
     }
     var conditions = "";
-    var invasiveconditions = `WHERE origin = 'invasive'`;
-    var agtable = 'cash_receipt';
-    var agconditions = `WHERE commodity = 'All Commodities-All'`;
-    var aglocconditions = '';
     if (options.state.length !== 0 && !options.state.includes('All') ) {
       optionString1 += `State: ${options.state}; `;
-      optionString2 += `State: ${options.state}; `;
-      optionString3 += `State: ${options.state}; `;
       for (let i in options.state) {
         if (i > 0) {
           conditions = `${conditions} OR obsstate = '${options.state[i]}'`;
-          invasiveconditions = `${invasiveconditions} OR obsstate = '${options.state[i]}'`;
-          aglocconditions = `${aglocconditions} OR state_name = '${options.state[i]}'`;
         } else {
           conditions = `WHERE (obsstate = '${options.state[i]}'`;
-          invasiveconditions += ` AND (obsstate = '${options.state[i]}'`;
-          aglocconditions += ` AND (state_name = '${options.state[i]}'`;
         }
         if (options.county.length !== 0 && !options.county.includes('All')) {
           optionString1 += `County: ${options.county}; `;
-          optionString3 += `County: ${options.county}; `;
           for (let i in options.county) {
             if (i > 0) {
               conditions = `${conditions} OR obscounty = '${options.county[i]}'`
-              invasiveconditions = `${invasiveconditions} OR obscounty = '${options.county[i]}'`
             } else {
               conditions += ` AND (obscounty = '${options.county[i]}'`;
-              invasiveconditions += ` AND (obscounty = '${options.county[i]}'`;
             }
           }
           conditions += ')';
-          invasiveconditions += ')';
         }
       }
       conditions += ')';
-      invasiveconditions += ')';
-      aglocconditions += ')';
     }
     if (options.order.length !== 0 && !options.order.includes('All')) {
       optionString1 += `Order: ${options.order}; `;
-      optionString3 += `Order: ${options.order}; `;
       for (let i in options.order) {
         if (i > 0) {
-          invasiveconditions += ` OR insect_order = '${options.order[i]}'`;
+          conditions += ` OR insect_order = '${options.order[i]}'`;
         } else {
-          invasiveconditions += ` AND (insect_order = '${options.order[i]}'`;
+          conditions += ` AND (insect_order = '${options.order[i]}'`;
         }
       }
       if (options.family.length !== 0 && !options.family.includes('All')) {
         optionString1 += `Family: ${options.family}; `;
-        optionString3 += `Family: ${options.family}; `;
         for (let i in options.family) {
-          invasiveconditions += ` OR family = '${options.family[i]}'`;
+          conditions += ` OR family = '${options.family[i]}'`;
           }
         if (options.genus.length !== 0 && !options.genus.includes('All')) {
           optionString1 += `Genus: ${options.genus}; `;
-          optionString3 += `Genus: ${options.genus}; `;
           for (let i in options.genus) {
-            invasiveconditions += ` OR genus = '${options.genus[i]}'`;
+            conditions += ` OR genus = '${options.genus[i]}'`;
           }
         }
       }
-      invasiveconditions += ')';
-    }
-    var proxyDataType = '';
-    if (options.dataType === '') {
-      proxyDataType = 'Cash Receipts'
-    } else {
-      proxyDataType = `${options.dataType}`
-    }
-    optionString2 += `Data Type: ${proxyDataType}; `;
-    optionString3 += `Data Type: ${proxyDataType}; `;
-    if (options.dataType === "Cash Receipts" && !options.incomeCategory.includes('All Commodities-All')) {
-      agconditions = `WHERE commodity = '${options.incomeCategory[0]}'`;
-      optionString2 += `Commodity: ${options.incomeCategory}; `;
-      optionString3 += `Commodity: ${options.incomeCategory}; `;
-    }
-    else if (options.dataType === "Inventory Change") {
-      agtable = 'inventory_change_value';
-      if (agconditions !== '' && !options.incomeCategory.includes('All commodities') && options.incomeCategory.length !== 0) {
-        agconditions = `WHERE sector = '${options.incomeCategory[0]}'`;
-        optionString2 += `Sector: ${options.incomeCategory}; `;
-        optionString3 += `Sector: ${options.incomeCategory}; `;
-      }
-      else {
-        agconditions = `WHERE sector = 'All commodities'`
-      }
-    }
-    else if (options.dataType === "Intermediate Product Expenses") {
-      agtable = 'intermediate_product_expense'
-      if (options.incomeCategory.length !== 0) {
-        optionString2 += `Category: ${options.incomeCategory}; `;
-        optionString3 += `Category: ${options.incomeCategory}; `;
-      for (let i in options.incomeCategory) {
-          if (i > 0) {
-            agconditions += ` OR ip_category = '${options.incomeCategory[i]}'`;
-          } else {
-            agconditions = `WHERE ip_category = '${options.incomeCategory[i]}'`;
-          }
-        }
-      } else { 
-        agconditions = `WHERE ip_category != ' '`;
-      }
+      conditions += ')';
     }
     optionString1 = optionString1.slice(0, -2);
-    optionString2 = optionString2.slice(0, -2);
-    optionString3 = optionString3.slice(0, -2);
     
     var queryText1 = `WITH dates(dateIntervals) AS (
-      SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
-        WHERE observationdate >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
-        AND observationdate <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
-        GROUP BY TO_CHAR(${timeformat})
-      ),
-      invasiveobservationlist(dateIntervals) AS (
-        SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation obs
-        INNER JOIN "MIRANDABARNES".insect ins ON obs.obsspecies = ins.species_name
-        ${invasiveconditions}
-      ),
-      allobservationlist(dateIntervals) AS (
-        SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation obs
-        INNER JOIN "MIRANDABARNES".insect ins ON obs.obsspecies = ins.species_name
-        ${conditions}
-      ),
-      invasivescount(dateIntervals, invCount) AS (
-        SELECT invasiveobservationlist.dateIntervals, COUNT(invasiveobservationlist.dateIntervals)
-        FROM invasiveobservationlist
-      GROUP BY invasiveobservationlist.dateIntervals
-      ),
-      allcount(dateIntervals, aCount) AS (SELECT allobservationlist.dateIntervals, COUNT(allobservationlist.dateIntervals)
-        FROM allobservationlist
-        GROUP BY allobservationlist.dateIntervals
-      ),
-      normalized(dateIntervals, normCount) AS (SELECT invasivescount.dateIntervals, ROUND(invCount / aCount * 1000, 3)
-        FROM invasivescount JOIN allcount ON invasivescount.dateIntervals = allcount.dateIntervals
-        WHERE invasivescount.dateIntervals IS NOT NULL
-      ),
-      agdatabystate(year, summedData) AS (
-        SELECT year,  ( SUM(value) / (gdp_deflator / 100) )
-            FROM "MIRANDABARNES".${agtable}
-            ${agconditions}${aglocconditions}
-            GROUP BY year, gdp_deflator
-      ),
-      agdatalist(modDateIntervals, agcriterion) AS (
-        SELECT TO_CHAR(${timeformatag}), ROUND(AVG(summedData))
-            FROM agdatabystate
-            GROUP BY TO_CHAR(${timeformatag})
-      ),
-      normalagcombo(dateIntervals, dollarperinvasive) AS (
-        SELECT normalized.dateIntervals, ROUND(agcriterion / normCount, 2)
-          FROM normalized JOIN agdatalist ON SUBSTR(normalized.dateIntervals, 1, 4) = agdatalist.modDateIntervals
-      )
-    SELECT dates.dateIntervals, normCount, agcriterion, dollarperinvasive
-        FROM dates LEFT OUTER JOIN normalized on dates.dateIntervals = normalized.dateIntervals LEFT OUTER JOIN agdatalist ON
-            SUBSTR(dates.dateIntervals, 1, 4) = agdatalist.modDateIntervals LEFT OUTER JOIN normalagcombo on dates.dateIntervals = normalagcombo.dateIntervals
-        ORDER BY dates.dateIntervals`;
+        SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
+          WHERE observationdate >= to_timestamp('${options.startDate}', 'YYYY-MM-DD')
+          AND observationdate <= to_timestamp('${options.endDate}', 'YYYY-MM-DD')
+          GROUP BY TO_CHAR(${timeformat})
+        ),
+        numberOfSpeciesObservedPerDate(dateIntervals, species, speciesCount) AS (
+          SELECT TO_CHAR(${timeformat}), obsspecies, COUNT(obsid)
+              FROM "MIRANDABARNES".observation JOIN "MIRANDABARNES".insect ON observation.obsspecies = insect.species_name
+              ${conditions}
+              GROUP BY TO_CHAR(${timeformat}), obsspecies
+        ),
+        totalObservations(dateIntervals, totalCount) AS (
+          SELECT TO_CHAR(${timeformat}), COUNT(obsid)
+              FROM "MIRANDABARNES".observation JOIN "MIRANDABARNES".insect ON observation.obsspecies = insect.species_name
+              ${conditions}
+              GROUP BY TO_CHAR(${timeformat})
+        ),
+        numeratorTab(dateIntervals, numerator) AS (
+          SELECT dateIntervals, SUM((speciesCount) * (speciesCount - 1))
+              FROM numberOfSpeciesObservedPerDate
+              GROUP BY dateIntervals
+        ),
+        denominatorTab(dateIntervals, denominator) AS (
+          SELECT dateIntervals, ((totalCount) * (totalCount - 1))
+              FROM totalObservations
+        ),
+        simpsonsIndex(dateIntervals, indexValue) AS (
+          SELECT denominatorTab.dateIntervals, ROUND(numerator / denominator, 5)
+              FROM numeratorTab JOIN denominatorTab ON numeratorTab.dateIntervals = denominatorTab.dateIntervals
+              WHERE denominator != 0
+        )
+          SELECT dates.dateIntervals, indexValue
+              FROM dates LEFT OUTER JOIN simpsonsIndex ON dates.dateIntervals = simpsonsIndex.dateIntervals
+              ORDER BY dates.dateIntervals`;
     console.log(queryText1);
     axios
       .get(`http://localhost:5001/?query=${encodeURIComponent(queryText1)}`, {
@@ -472,25 +337,13 @@ function InvasiveInsectsTab() {
         //fetch data with the custom query and format it like the below
         //must be ordered by date, since dates cannot be sorted by recharts
         var dataParsed1 = [];
-        var dataParsed2 = [];
-        var dataParsed3 = [];
         for (let i in response.data) {
           dataParsed1.push({
             date: response.data[i][0],
             datakey: response.data[i][1],
           });
-          dataParsed2.push({
-            date: response.data[i][0],
-            datakey: response.data[i][2],
-          });
-          dataParsed3.push({
-            date: response.data[i][0],
-            datakey: response.data[i][3],
-          });
         }
         setData1(prevHistory => [...prevHistory, {dataarray: dataParsed1, lilid: optionString1}]);
-        setData2(prevHistory => [...prevHistory, {dataarray: dataParsed2, lilid: optionString2}]);
-        setData3(prevHistory => [...prevHistory, {dataarray: dataParsed3, lilid: optionString3}]);
       });
   };
 
@@ -613,54 +466,6 @@ function InvasiveInsectsTab() {
               max="2023-12-31"
             />
           </label>
-        </div>
-        <div>
-          <h3>Farm Income/Expense Data:</h3>
-          <label>
-            Select Farm Income Data Type:
-            <select name="dataType" value={options.dataType} onBlur={populateCategories} onChange={handleChange}>
-              <option value="">Select Income Data Type</option>
-              {dataTypes.map((option) => (
-                <option key={option} value={option}>{option}</option>
-             ))}
-            </select>
-          </label>
-          <br />
-          <label>
-            Select Category:
-            <select
-              name="incomeCategory"
-              value={
-                options.incomeCategory.length === 0
-                  ? "All"
-                  : `Selected ${options.incomeCategory.length}`
-              }
-              onChange={handleChange}
-            >
-              <option>
-                {options.incomeCategory.length === 0
-                  ? "All"
-                  : `Selected ${options.incomeCategory.length}`}
-              </option>
-              <option value={"-----------"}>{"-----------"} </option>
-              {incomeCategories
-                .filter((item, idx) => !options.incomeCategory.includes(item[0]))
-                .map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
-            {options.incomeCategory.map((item, idx) => (
-              <div key={idx} style={{ display: "inline-block" }}>
-                <button
-                  onClick={() => removeSelectedItem("incomeCategory", item)}
-                >{`${item} x`}</button>
-              </div>
-            ))}
-          </div>
         </div>
         <div>
           <h3>Insect Observations</h3>
@@ -795,7 +600,7 @@ function InvasiveInsectsTab() {
         }}
       >
           <div style={{ alignContent: "center" }}>
-            <h2>Normalized Invasive Species Observations (Per Thousand Insects)</h2>
+            <h2>Diversity By Location Over Time</h2>
             <br />
             <div style={{ display: "inline-block" }}>
               <LineChart
@@ -821,7 +626,7 @@ function InvasiveInsectsTab() {
                   position={"left"}
                   offset={20}
                   angle={270} 
-                  value={"Invasive Insects Per Thousand Observations"} />
+                  value={"Simpson's Index"} />
                 </YAxis>
                 <Tooltip />
                 <Legend
@@ -841,108 +646,10 @@ function InvasiveInsectsTab() {
                   ))}
                 </LineChart>
             </div>
-          </div>
-        
-        <div style={{ alignContent: "center" }}>
-            <h2>Farm Income/Expense Data</h2>
-            <br />
-            <div style={{ display: "inline-block" }}>
-              <LineChart
-                width={800}
-                height={500}
-                data={transformDataForRecharts(data2)}
-                margin={{
-                  top: 20,
-                  right: 20,
-                  bottom: 20,
-                  left: 75,
-                }}
-              >
-                <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="date" />
-              <YAxis domain={["dataMin", "dataMax"]}>
-                <Label
-                  style={{
-                    textAnchor: "middle",
-                    fontSize: "130%",
-                    fill: "black",
-                  }}
-                  position={"left"}
-                  offset={50}
-                  angle={270} 
-                  value={"US Dollars"} />
-                </YAxis>
-              <Tooltip />
-              <Legend
-                layout="horizontal"
-                verticalAlign="bottom"
-                align="bottom"
-                height={36}
-              />
-              {data2.map(({ lilid }) => (
-                  <Line
-                    key={lilid}
-                    type="monotone"
-                    dataKey={lilid}
-                    stroke={getRandomColor()}
-                    dot={false}
-                  />
-                  ))}
-            </LineChart>
-          </div>
-        </div>
-        <div style={{ alignContent: "center" }}>
-          <h2>Dollars Per Normalized Observation</h2>
-          <br />
-          <div style={{ display: "inline-block" }}>
-            <LineChart
-              width={800}
-              height={500}
-              data={transformDataForRecharts(data3)}
-              margin={{
-                top: 20,
-                right: 20,
-                bottom: 20,
-                left: 75,
-              }}
-            >
-              <CartesianGrid stroke="#f5f5f5" />
-              <XAxis dataKey="date" />
-              <YAxis domain={["dataMin", "dataMax"]}>
-                <Label
-                  style={{
-                    textAnchor: "middle",
-                    fontSize: "130%",
-                    fill: "black",
-                  }}
-                  position={"left"}
-                  offset={50}
-                  angle={270} 
-                  value={"USD Per Normalized Observation"} />
-                </YAxis>
-              <Tooltip />
-              <Legend
-                layout="horizontal"
-                verticalAlign="bottom"
-                align="bottom"
-                height={36}
-              />
-              {data3.map(({ lilid }) => (
-                  <Line
-                    key={lilid}
-                    type="monotone"
-                    dataKey={lilid}
-                    stroke={getRandomColor()}
-                    dot={false}
-                  />
-                  ))}
-            </LineChart>
-          </div>
         </div>
     </div>
     <br />
   </div>
   );
 }
-
-export default InvasiveInsectsTab;
+export default SimpsonTab;

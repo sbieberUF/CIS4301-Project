@@ -26,7 +26,8 @@ function OverviewPage() {
             "as well as possible fatality types associated with those events." +
             " The data is then presented in 3 graphs: (1) Frequency of storm events with respect to time." +
             " (2) Frequency of related deaths with respect to time" +
-            " (3) Average age of deaths with respect to time"
+            " (3) Average age of deaths with respect to time. " +
+            "Data for this set came from the National Oceanic and Atmospheric Administration."
         );
         break;
       case "Temperature-Dependent Mortality":
@@ -35,16 +36,24 @@ function OverviewPage() {
          "United States. It uses Recharts to visualize the data with line charts. Users can select criteria, view the data in tables, and see the corresponding\n" +
          "charts for temperature and mortality rates over time. Temperature is the average temperature of selected state(s)/county(ies) and mortality rate is the\n" +
          "calculated crude death rate from the data: Crude Rates are expressed as the number of deaths reported each calendar year per 100,000 population, reporting\n" +
-         "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000.");
+         "the death rate per 100,000 persons. Crude Rate = Count / Population * 100,000. " +
+         "Data for this set came from the Centers for Disease Control and Prevention and the National Oceanic and Atmospheric Administration.");
         break;
       case "Invasive Insects":
-        setPreview("Invasive Insects Preview/Summary");
+        setPreview("This page is designed with the goal of a) determining the extent to which iNaturalist observations serve as an effective proxy for damage caused\n" +
+        "by different invasive insect pests by contrasting volume of normalized observations over a specified time frame to various measures of agricultural costs and\n" +
+        "output over that same time frame and b) where iNaturalist seems to prove an effective tool, examining the per dollar extent to which invasive insect occurrences\n" +
+        "in different locations affect various measures of output and expenses as a measure of resilience of different states/commodities/sectors, etc. to invasive insects\n" +
+        "Datasets for this part of the application are derived from iNaturalist, the Global Register of Introduced and Invasive Species - United States (Contiguous),\n" +
+        "and the Economic Research Service of the U.S. Department of Agriculture.");
+        break;
+      case "Insect Diversity":
+        setPreview("This page is meant to allow users to use iNaturalist to gauge relative levels of diversity between different locations, specifically via Simpson's index.\n" +
+        "This metric gets smaller the more diverse a population is. Users can determine how diverse their states/counties are relative to each other, as well as select\n" +
+        "specific taxa whose level of diversity they want to assess in more detail. Data for this part of the application came from iNaturalist.");
         break;
       case "Housing Index":
         setPreview("Housing Index Preview/Summary");
-        break;
-      case "Government Spending":
-        setPreview("Government Spending Preview/Summary");
         break;
       default:
         setPreview("");
@@ -72,8 +81,8 @@ function OverviewPage() {
         {" "}
         Users are invited to explore five distinct dashboards examining severe
         weather, human health and temperature, invasive species burdens on
-        agriculture, property value and precipitation, and, lastly, government
-        spending. On each page, trends in these topics can be examined over time
+        agriculture, property value and precipitation, etc.. On each page, trends
+        in these topics can be examined over time
         and plotted as curves on different graphs. Users have the flexibility to
         select different geographic locations, taxa, agricultural commodities,
         causes of death, etc. depending on the target graph, as well as to
@@ -91,14 +100,14 @@ function OverviewPage() {
         <button onClick={() => showPreview("Temperature-Dependent Mortality")}>
           Mortality Preview/Summary
         </button>
+        <button onClick={() => showPreview("Insect Diversity")}>
+          Invasive Diversity Preview/Summary
+        </button>
         <button onClick={() => showPreview("Invasive Insects")}>
           Invasive Insects Preview/Summary
         </button>
         <button onClick={() => showPreview("Housing Index")}>
           Housing Index Preview/Summary
-        </button>
-        <button onClick={() => showPreview("Government Spending")}>
-          Government Spending Preview/Summary
         </button>
       </div>
       {preview && <p>{preview}</p>}
@@ -108,7 +117,7 @@ function OverviewPage() {
         The data for this project has been derived from several publically
         available datasets published by various agencies of the U.S. government,
         among other sources. More detail on each source is provided on the
-        dashboard pages into which they were incorporated. The total number of
+        preview slides. The total number of
         tuples assimilated into the database can be obtained using the button
         below.{" "}
       </p>

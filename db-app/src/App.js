@@ -5,6 +5,7 @@ import InvasiveInsectsTab from "./invasiveInsects.js";
 import SevereWeatherTab from "./severeWeather.js";
 import GovernmentSpending from "./governmentSpending.js";
 
+import SimpsonTab from "./simpson.js";
 import "./App.css";
 
 function App() {
@@ -24,9 +25,9 @@ function App() {
           "Overview",
           "Severe Weather",
           "Temperature-Dependent Mortality",
+          "Insect Diversity",
           "Invasive Insects",
           "Housing Index",
-          "Government Spending",
         ].map((tab) => (
           <div
             key={tab}
@@ -43,6 +44,7 @@ function App() {
         {activeTab === "Temperature-Dependent Mortality" && (
           <TemperatureDependentMortalityPage />
         )}
+        {activeTab === "Insect Diversity" && <SimpsonTab />}
         {activeTab === "Invasive Insects" && <InvasiveInsectsTab />}
         {activeTab === "Housing Index" && <HousingIndexTab />}
         {activeTab === "Government Spending" && <GovernmentSpending />}
