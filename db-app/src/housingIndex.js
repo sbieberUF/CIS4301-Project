@@ -16,6 +16,8 @@ function HousingPriceIndexTab() {
   const [years, setYears] = useState([]);
   const [selectedYears, setSelectedYears] = useState([]);
   const [tableData, setTableData] = useState([]);
+  const [hideNoWeatherStations, setHideNoWeatherStations] = useState(true);
+
 
   useEffect(() => {
     fetchStates();
@@ -36,17 +38,35 @@ function HousingPriceIndexTab() {
     }
   };
 
-  const fetchMunicipalities = async (state) => {
-    if (!state) return;
-    const municipalitiesQuery = `SELECT DISTINCT municipality_name FROM rrodriguez7.municipality WHERE state_name = '${state}' ORDER BY municipality_name`;
+  const fetchMunicipalities = async (state, hideNoWeatherStations) => {
+    if (!state) return [];
+  
+    let municipalitiesQuery = `
+      SELECT DISTINCT m.municipality_name
+      FROM rrodriguez7.municipality m
+    `;
+  
+    if (hideNoWeatherStations) {
+      municipalitiesQuery += `
+        INNER JOIN rrodriguez7.weather_station ws ON m.municipality_name = ws.municipality_name AND m.state_name = ws.state_name
+        INNER JOIN rrodriguez7.quarterly_precipitation qp ON ws.station_id = qp.station_id
+      `;
+    }
+  
+    municipalitiesQuery += `
+      WHERE m.state_name = '${state}'
+      ORDER BY m.municipality_name`;
+  
     try {
       const { data } = await axios.get(`http://localhost:5001/?query=${encodeURIComponent(municipalitiesQuery)}`);
-      setMunicipalities(data);
-      setSelectedMunicipalities([]);
+      return data;
     } catch (error) {
       console.error("Error fetching municipalities:", error);
+      return [];
     }
   };
+  
+  
 
   const fetchYears = async (state, municipality) => {
     if (!state) return;
@@ -128,6 +148,10 @@ function HousingPriceIndexTab() {
       ]);
       console.log('Housing Response:', housingResponse.data);
       console.log('Precipitation Response:', precipitationResponse.data);
+      if (housingResponse.data.length === 0) {
+        window.alert("No weather stations (precipitation data) available for selected location(s)");
+        return; 
+      }
 
       const formattedHousingData = housingResponse.data.map(([year, quarter, index_value, state_name, municipality_name]) => ({
         year,
@@ -215,28 +239,49 @@ function HousingPriceIndexTab() {
 
   const handleStateChange = (e) => {
     const options = e.target.options;
-    const selectedValues = [];
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selectedValues.push(options[i].value);
-      }
-    }
+    const selectedValues = Array.from(options)
+      .filter(option => option.selected)
+      .map(option => option.value);
+  
     setSelectedStates(selectedValues);
-
     if (selectedValues.length > 0) {
       const selectedState = selectedValues[0];
-      fetchMunicipalities(selectedState);
+      combineMunicipalitiesFromStates(selectedValues);
       fetchYears(selectedState);
     } else {
+      setMunicipalities([]);
+      setSelectedMunicipalities([]);
       setYears([]);
     }
   };
+  
 
   const isOutlier = (value, average) => Math.abs(value) > 5 * average; // TODO: Tweak outlier detection calculation
+  
+  const handleHideNoWeatherStationsChange = (event) => {
+    setHideNoWeatherStations(event.target.checked);
+    combineMunicipalitiesFromStates(selectedStates);
+  };
+  
+  const combineMunicipalitiesFromStates = async (states) => {
+    const municipalitiesPromises = states.map(state => fetchMunicipalities(state, hideNoWeatherStations));
+    const municipalitiesResults = await Promise.all(municipalitiesPromises);
+    const combinedMunicipalities = [...new Set(municipalitiesResults.flat())];
+    setMunicipalities(combinedMunicipalities);
+    setSelectedMunicipalities([]);
+  };
 
   return (
     <div>
       <h2>Housing Price Index and Precipitation Analysis</h2>
+      <label>
+      Hide Municipalities without weather stations:
+      <input
+        type="checkbox"
+        checked={hideNoWeatherStations}
+        onChange={handleHideNoWeatherStationsChange}
+      />
+    </label>
       <div>
         <label>
           Select State:
@@ -263,6 +308,7 @@ function HousingPriceIndexTab() {
           </select>
         </label>
       </div>
+      <h5>Hold CTRL to select multiple options</h5>
       <button onClick={fetchData}>Load Data</button>
 
       <LineChart width={600} height={300} data={housingData}>
