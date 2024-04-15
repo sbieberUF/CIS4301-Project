@@ -80,7 +80,7 @@ function HousingPriceIndexTab() {
   const fetchData = async () => {
     if (selectedStates.length === 0) return;
 
-    const housingQuery = `
+    let housingQuery = `
     SELECT 
       DISTINCT hpic.year, 
       hpic.quarter, 
@@ -95,13 +95,25 @@ function HousingPriceIndexTab() {
       rrodriguez7.weather_station ws ON m.municipality_name = ws.municipality_name AND m.state_name = ws.state_name
     JOIN 
       rrodriguez7.quarterly_precipitation qp ON ws.station_id = qp.station_id AND hpic.year = qp.precipitation_year
-    WHERE 
-      hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})
-    ORDER BY 
-      hpic.year, hpic.quarter
   `;
 
-    const precipitationQuery = `
+  if (selectedMunicipalities.length > 0) {
+    /*
+    let temp = ` WHERE m.municipality_name IN (${selectedMunicipalities.map(municipality => `'${municipality}'`).join(", ")}) AND hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")}) `;
+    console.log('Temp:', temp);
+    */
+    housingQuery += ` WHERE m.municipality_name IN (${selectedMunicipalities.map(municipality => `'${municipality}'`).join(", ")}) AND hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")}) `;
+  } else {
+    housingQuery += ` WHERE hpic.state_name IN (${selectedStates.map(state => `'${state}'`).join(", ")})`;
+  }
+
+  if (selectedYears.length > 0) {
+    housingQuery += ` AND hpic.year IN (${selectedYears.join(", ")})`;
+  } 
+
+  housingQuery += 'ORDER BY hpic.year, hpic.quarter'
+
+    let precipitationQuery = `
       SELECT qp.quarter, qp.amount, qp.precipitation_year, ws.state_name
       FROM rrodriguez7.quarterly_precipitation qp
       JOIN rrodriguez7.weather_station ws ON qp.station_id = ws.station_id
@@ -182,7 +194,15 @@ function HousingPriceIndexTab() {
         housingIndex: index_value,
         municipality: municipality_name,
       }));
-
+      /*
+      const filteredTableData = formattedHousingData.filter(data => {
+        // Filter the data to include only the selected years and municipalities.
+        const matchesSelectedYears = selectedYears.length === 0 || selectedYears.includes(String(data.year));
+        const matchesSelectedMunicipalities = selectedMunicipalities.length === 0 || selectedMunicipalities.includes(data.municipalityName);
+        return matchesSelectedYears && matchesSelectedMunicipalities;
+      });
+      */
+    
       setTableData(formattedTableData);
 
       setHousingData(housingDataArray);
