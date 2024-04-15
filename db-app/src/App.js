@@ -28,6 +28,7 @@ function App() {
           "Insect Diversity",
           "Invasive Insects",
           "Housing Index",
+          "Government Spending"
         ].map((tab) => (
           <div
             key={tab}

@@ -8,6 +8,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Label,
 } from "recharts";
 
 /**
@@ -25,8 +26,8 @@ function responseParser(response) {
       country_name: row[0],
       year: row[1],
       capital_in_local_currency: row[2],
-      population: row[3],
-      percent_gdp: row[4],
+      // population: row[3],
+      // percent_gdp: row[4],
     };
   });
 }
@@ -66,21 +67,17 @@ export default function GovermentSpending() {
   const [queryResponse, setQueryResponse] = useState([]);
 
   const _query =
-    `SELECT c.country_name, p.year, p.capital_in_local_currency, pd.population, p.percent_gdp * 100 FROM country_data c JOIN policy_expenditure_datum p ON c.country_id = p.country_id JOIN population_datum pd ON pd.country_id = p.country_id AND pd.year = p.year WHERE ${getYearFilter(
+    `SELECT c.country_name, p.year, SUM(p.capital_in_local_currency) 
+    FROM "A.KUMAWAT".country_data c 
+    JOIN "A.KUMAWAT".policy_expenditure_datum p ON c.country_id = p.country_id JOIN "A.KUMAWAT".population_datum pd ON pd.country_id = p.country_id
+    AND pd.year = p.year WHERE ${getYearFilter(
       yearStart,
       yearEnd
     )} ${getCountryFilter(country)} ${getPolicyFilter(
       policies
-    )} p.capital_in_local_currency > 0`.trim();
-
-  const data = [
-    { name: "Jan", value: 10 },
-    { name: "Feb", value: 20 },
-    { name: "Mar", value: 15 },
-    { name: "Apr", value: 25 },
-    { name: "May", value: 30 },
-    { name: "Jun", value: 35 },
-  ];
+    )} p.capital_in_local_currency > 0
+    GROUP BY p.year, c.country_name
+    ORDER BY p.year`.trim();
 
   function getGraphData() {
     return queryResponse.map((row) => {
@@ -104,7 +101,7 @@ export default function GovermentSpending() {
 
   useEffect(() => {
     async function fetchAll() {
-      const fetchAllCountriesQuery = "select country_name from country_data";
+      const fetchAllCountriesQuery = `select country_name from "A.KUMAWAT".country_data`;
       const d = await fetchData(fetchAllCountriesQuery);
 
       setAllCountries(d.map((row) => row[0]));
@@ -112,7 +109,7 @@ export default function GovermentSpending() {
       setCountry(d[0][0]);
 
       const fetchAllPoliciesQuery =
-        "select distinct(policy_category) from policy_expenditure_datum";
+        `select distinct(policy_category) from "A.KUMAWAT".policy_expenditure_datum`;
       const p = await fetchData(fetchAllPoliciesQuery);
 
       setAllPolicies([...p, ["All Policies"]].map((row) => row[0]));
@@ -134,8 +131,7 @@ export default function GovermentSpending() {
   return (
     <div>
       <h3 style={{ marginTop: 20 }}>
-        Goverment Spendings on controlling CO<sub>2</sub> Emissions by
-        Implementing Policies
+        Goverment Spending on Environmental Policies
       </h3>
       <div className="govt-spending-box">
         <div style={{ paddingInline: "2rem" }}>
@@ -211,12 +207,27 @@ export default function GovermentSpending() {
           </form>
         </div>
         <div style={{ paddingInline: "2rem" }}>
-          <LineChart width={800} height={500} data={getGraphData()}>
+          <LineChart width={800} height={500} data={getGraphData()} margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 100,
+                }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
-            <YAxis />
+            <YAxis>
+            <Label
+                  style={{
+                    textAnchor: "middle",
+                    fontSize: "130%",
+                    fill: "black",
+                  }}
+                  position={"left"}
+                  offset={70}
+                  angle={270} 
+                  value={"Spending in Local Currency"} />
+            </YAxis>
             <Tooltip />
-            <Legend />
             <Line type="monotone" dataKey="value" stroke="#8884d8" />
           </LineChart>
         </div>
