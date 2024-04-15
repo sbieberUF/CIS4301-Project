@@ -7,34 +7,35 @@ import {
   Tooltip,
   Legend,
   LineChart,
+  Label
 } from "recharts";
 import axios from "axios";
 
 function InvasiveInsectsTab() {
   const [options, setOptions] = useState({
-    state: 'All',
-    county: 'All',
+    state: [],
+    county: [],
     dateInterval: "Daily",
-    startDate: "1924-01-01",
+    startDate: "2014-01-01",
     endDate: "2024-03-24",
-    order: 'All',
-    family: 'All',
-    genus: 'All',
+    order: [],
+    family: [],
+    genus: [],
     dataType: '',
-    incomeCategory: ''
+    incomeCategory: []
   });
 
-  const [data1, setData1] = useState(null);
-  const [data2, setData2] = useState(null);
-  const [data3, setData3] = useState(null);
+  const [data1, setData1] = useState([]);
+  const [data2, setData2] = useState([]);
+  const [data3, setData3] = useState([]);
   // Mock data for right now 
   const states = ['All', 'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming']
-  const [counties, setCounties] = useState(['All']);
+  const [counties, setCounties] = useState([]);
   const populateCounties= async () => {
-    var startingCounties = ['All'];
-    if (options.state !== 'All') {
+    setCounties(["Loading..."]);
+    var startingCounties = [];
     var countyQuery = `SELECT DISTINCT obscounty FROM "MIRANDABARNES".counties
-    WHERE obsstate = '${options.state}'
+    WHERE obsstate = '${options.state[options.state.length - 1]}'
     ORDER BY obscounty`;
     axios
     .get(`http://localhost:5001/?query=${encodeURIComponent(countyQuery)}`, {
@@ -45,9 +46,8 @@ function InvasiveInsectsTab() {
       for (let i in response.data) {
         startingCounties.push(response.data[i]);
       }
-      setCounties(startingCounties);
-  })}
-  else {setCounties(['All'])}};
+      setCounties(startingCounties);})
+  };
   const dateIntervals = ["Daily", "Monthly", "Yearly", "Every Five Years"];
   const orders = ['All',
     "Blattodea",
@@ -64,12 +64,12 @@ function InvasiveInsectsTab() {
     "Siphonaptera",
     "Thysanoptera",
 ];
-  const [families, setFamilies] = useState(['All']);
+  const [families, setFamilies] = useState([]);
   const populateFamilies = async () => {
-    var startingFamilies = ['All'];
-    if (options.order !== 'All' && options.order !== '') {
+    setFamilies(["Loading..."]);
+    var startingFamilies = [];
     var familyQuery = `SELECT DISTINCT family FROM "MIRANDABARNES".insect
-    WHERE insect_order = '${options.order}' ORDER BY family`;
+    WHERE insect_order = '${options.order[options.order.length - 1]}' ORDER BY family`;
     axios
     .get(`http://localhost:5001/?query=${encodeURIComponent(familyQuery)}`, {
       crossdomain: true,
@@ -80,13 +80,15 @@ function InvasiveInsectsTab() {
         startingFamilies.push(response.data[i]);
       }
       setFamilies(startingFamilies);
-  })}};
-  const [genera, setGenera] = useState(['All'])
+    })
+    setGenera([])};
+
+  const [genera, setGenera] = useState([])
   const populateGenera = async () => {
-    var startingGenera = ['All'];
-    if (options.family !== 'All' && options.family !== '') {
+    setGenera(["Loading..."]);
+    var startingGenera = [];
     var genusQuery = `SELECT DISTINCT genus FROM "MIRANDABARNES".insect
-    WHERE family = '${options.family}' ORDER BY genus`;
+    WHERE family = '${options.family[options.family.length - 1]}' ORDER BY genus`;
     axios
     .get(`http://localhost:5001/?query=${encodeURIComponent(genusQuery)}`, {
       crossdomain: true,
@@ -97,12 +99,13 @@ function InvasiveInsectsTab() {
         startingGenera.push(response.data[i]);
       }
       setGenera(startingGenera);
-  })}};
+  })};
 
   const dataTypes = ["Cash Receipts", "Inventory Change", "Intermediate Product Expenses"];
 
-  const [incomeCategories, setIncomeCategories] = useState(['']);
+  const [incomeCategories, setIncomeCategories] = useState([]);
   const populateCategories = async () => {
+    setIncomeCategories(["Loading..."]);
     var startingCat = [];
     var catQuery = '';
     if (options.dataType === "Cash Receipts") {
@@ -128,10 +131,129 @@ function InvasiveInsectsTab() {
   
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(options);
+    if (value === "-----------") {
+      return;
+    }
+    if (name === "state") {
+      if (options.state.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      var arr = options.state;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "order") {
+      if (options.order.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.order;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "county") {
+      if (options.county.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.county;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "family") {
+      if (options.family.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.family;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "genus") {
+      if (options.genus.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.genus;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "incomeCategory") {
+      if (options.incomeCategory.includes(value)) {
+        return;
+      }
+      if (value === 'All') {
+        setOptions((prevState) => ({
+          ...prevState,
+          [name]: [],
+        }));
+        return;
+      }
+      arr = options.incomeCategory;
+      arr.push(value);
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: arr,
+      }));
+    } else if (name === "dataType") {
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+      options.incomeCategory = [];
+    }  else {
+      setOptions((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    } 
+  };
+
+  const removeSelectedItem = (nm, value) => {
     setOptions((prevState) => ({
       ...prevState,
-      [name]: value,
+      [nm]: options[nm].filter((item) => item !== value),
     }));
   };
   
@@ -140,34 +262,35 @@ function InvasiveInsectsTab() {
       "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0")
     );
   };
-  
-  const lines = (dataset) => {
-    const entries = dataset.map((option) => {
-      const keys = Object.keys(option);
-      return keys;
-    });
-    const flattened = entries.reduce((prev, current) => {
-      prev = prev.concat(current);
-      return prev;
-    }, []);
-    const filtered = flattened.filter((key) => key !== "date");
-    const uniqueKeys = [...new Set(filtered)];
-    return uniqueKeys.map((key) => {
-      console.log(key);
-      return (
-        <Line
-          name={key}
-          type="monotone"
-          stroke={getRandomColor()}
-          dataKey={key}
-          dot={false}
-        />
-      );
-    });
-  };
+
+  const clearCharts = () => {
+    setData1([]);
+    setData2([]);
+    setData3([]);
+  }
+
+  const transformDataForRecharts = (input) => {
+    const data = {};
+    if (!(Object.is(input[0], null))) {
+      input.forEach(item => {
+        const { dataarray, lilid } = item;
+        dataarray.forEach(({ date, datakey }) => {
+          if (!data[date]) {
+            data[date] = { date };
+          }
+          data[date][lilid] = datakey;
+        });
+      });
+    }
+    // Convert object to array for Recharts compatibility
+    return Object.values(data);
+  }
 
   const generateGraph = async (options) => {
     //format the string
+    var optionString1 = ``;
+    var optionString2 = ``;
+    var optionString3 = ``;
     var timeformat = `observationdate, 'YYYY-MM-DD'`;
     var timeformatag = `year`;
     if (options.dateInterval === "Monthly") {
@@ -185,32 +308,85 @@ function InvasiveInsectsTab() {
     var agtable = 'cash_receipt';
     var agconditions = `WHERE commodity = 'All Commodities-All'`;
     var aglocconditions = '';
-    if (options.state !== 'All' && options.state !== '') {
-      conditions = `WHERE obsstate = '${options.state}'`;
-      aglocconditions = ` AND state_name = '${options.state}'`
-      if (options.county !== 'All' && options.county !== '') {
-        conditions += ` AND obscounty = '${options.county}'`;
-        invasiveconditions += ` AND obscounty = '${options.county}'`;
-      }
-      invasiveconditions += ` AND obsstate = '${options.state}'`;
-    }
-    if (options.order !== 'All' && options.order !== '') {
-      invasiveconditions += ` AND insect_order = '${options.order}'`;
-      if (options.family !== 'All' && options.family !== '') {
-        invasiveconditions += ` AND family = '${options.family}'`;
-        if (options.genus !== 'All' && options.genus !== '') {
-          invasiveconditions += ` AND genus = '${options.genus}'`;
+    if (options.state.length !== 0 && !options.state.includes('All') ) {
+      optionString1 += `State: ${options.state}; `;
+      optionString2 += `State: ${options.state}; `;
+      optionString3 += `State: ${options.state}; `;
+      for (let i in options.state) {
+        if (i > 0) {
+          conditions = `${conditions} OR obsstate = '${options.state[i]}'`;
+          invasiveconditions = `${invasiveconditions} OR obsstate = '${options.state[i]}'`;
+          aglocconditions = `${aglocconditions} OR state_name = '${options.state[i]}'`;
+        } else {
+          conditions = `WHERE (obsstate = '${options.state[i]}'`;
+          invasiveconditions += ` AND (obsstate = '${options.state[i]}'`;
+          aglocconditions += ` AND (state_name = '${options.state[i]}'`;
+        }
+        if (options.county.length !== 0 && !options.county.includes('All')) {
+          optionString1 += `County: ${options.county}; `;
+          optionString3 += `County: ${options.county}; `;
+          for (let i in options.county) {
+            if (i > 0) {
+              conditions = `${conditions} OR obscounty = '${options.county[i]}'`
+              invasiveconditions = `${invasiveconditions} OR obscounty = '${options.county[i]}'`
+            } else {
+              conditions += ` AND (obscounty = '${options.county[i]}'`;
+              invasiveconditions += ` AND (obscounty = '${options.county[i]}'`;
+            }
+          }
+          conditions += ')';
+          invasiveconditions += ')';
         }
       }
+      conditions += ')';
+      invasiveconditions += ')';
+      aglocconditions += ')';
     }
-
-    if (options.dataType === "Cash Receipts" && options.incomeCategory !== 'All Commodities-All') {
-      agconditions = `WHERE commodity = '${options.incomeCategory}'`;
+    if (options.order.length !== 0 && !options.order.includes('All')) {
+      optionString1 += `Order: ${options.order}; `;
+      optionString3 += `Order: ${options.order}; `;
+      for (let i in options.order) {
+        if (i > 0) {
+          invasiveconditions += ` OR insect_order = '${options.order[i]}'`;
+        } else {
+          invasiveconditions += ` AND (insect_order = '${options.order[i]}'`;
+        }
+      }
+      if (options.family.length !== 0 && !options.family.includes('All')) {
+        optionString1 += `Family: ${options.family}; `;
+        optionString3 += `Family: ${options.family}; `;
+        for (let i in options.family) {
+          invasiveconditions += ` OR family = '${options.family[i]}'`;
+          }
+        if (options.genus.length !== 0 && !options.genus.includes('All')) {
+          optionString1 += `Genus: ${options.genus}; `;
+          optionString3 += `Genus: ${options.genus}; `;
+          for (let i in options.genus) {
+            invasiveconditions += ` OR genus = '${options.genus[i]}'`;
+          }
+        }
+      }
+      invasiveconditions += ')';
+    }
+    var proxyDataType = '';
+    if (options.dataType === '') {
+      proxyDataType = 'Cash Receipts'
+    } else {
+      proxyDataType = `${options.dataType}`
+    }
+    optionString2 += `Data Type: ${proxyDataType}; `;
+    optionString3 += `Data Type: ${proxyDataType}; `;
+    if (options.dataType === "Cash Receipts" && !options.incomeCategory.includes('All Commodities-All')) {
+      agconditions = `WHERE commodity = '${options.incomeCategory[0]}'`;
+      optionString2 += `Commodity: ${options.incomeCategory}; `;
+      optionString3 += `Commodity: ${options.incomeCategory}; `;
     }
     else if (options.dataType === "Inventory Change") {
       agtable = 'inventory_change_value';
-      if (agconditions !== '') {
-        agconditions = `WHERE sector = '${options.incomeCategory}'`;
+      if (agconditions !== '' && !options.incomeCategory.includes('All commodities') && options.incomeCategory.length !== 0) {
+        agconditions = `WHERE sector = '${options.incomeCategory[0]}'`;
+        optionString2 += `Sector: ${options.incomeCategory}; `;
+        optionString3 += `Sector: ${options.incomeCategory}; `;
       }
       else {
         agconditions = `WHERE sector = 'All commodities'`
@@ -218,14 +394,23 @@ function InvasiveInsectsTab() {
     }
     else if (options.dataType === "Intermediate Product Expenses") {
       agtable = 'intermediate_product_expense'
-      if (agconditions !== '') {
-        agconditions = `WHERE ip_category = '${options.incomeCategory}'`;
-      }
-      else {
-        agconditions = '';
+      if (options.incomeCategory.length !== 0) {
+        optionString2 += `Category: ${options.incomeCategory}; `;
+        optionString3 += `Category: ${options.incomeCategory}; `;
+      for (let i in options.incomeCategory) {
+          if (i > 0) {
+            agconditions += ` OR ip_category = '${options.incomeCategory[i]}'`;
+          } else {
+            agconditions = `WHERE ip_category = '${options.incomeCategory[i]}'`;
+          }
+        }
+      } else { 
+        agconditions = `WHERE ip_category != ' '`;
       }
     }
-
+    optionString1 = optionString1.slice(0, -2);
+    optionString2 = optionString2.slice(0, -2);
+    optionString3 = optionString3.slice(0, -2);
     
     var queryText1 = `WITH dates(dateIntervals) AS (
       SELECT TO_CHAR(${timeformat}) FROM "MIRANDABARNES".observation 
@@ -256,14 +441,19 @@ function InvasiveInsectsTab() {
         FROM invasivescount JOIN allcount ON invasivescount.dateIntervals = allcount.dateIntervals
         WHERE invasivescount.dateIntervals IS NOT NULL
       ),
-      agdatalist(modDateIntervals, agcriterion) AS (
-        SELECT TO_CHAR(${timeformatag}), ROUND(AVG( value / (gdp_deflator/100)))
-            FROM ${agtable}
+      agdatabystate(year, summedData) AS (
+        SELECT year,  ( SUM(value) / (gdp_deflator / 100) )
+            FROM "MIRANDABARNES".${agtable}
             ${agconditions}${aglocconditions}
+            GROUP BY year, gdp_deflator
+      ),
+      agdatalist(modDateIntervals, agcriterion) AS (
+        SELECT TO_CHAR(${timeformatag}), ROUND(AVG(summedData))
+            FROM agdatabystate
             GROUP BY TO_CHAR(${timeformatag})
       ),
       normalagcombo(dateIntervals, dollarperinvasive) AS (
-        SELECT normalized.dateIntervals, agcriterion / normCount
+        SELECT normalized.dateIntervals, ROUND(agcriterion / normCount, 2)
           FROM normalized JOIN agdatalist ON SUBSTR(normalized.dateIntervals, 1, 4) = agdatalist.modDateIntervals
       )
     SELECT dates.dateIntervals, normCount, agcriterion, dollarperinvasive
@@ -287,220 +477,471 @@ function InvasiveInsectsTab() {
         for (let i in response.data) {
           dataParsed1.push({
             date: response.data[i][0],
-            invasivesPerThousand: response.data[i][1],
+            datakey: response.data[i][1],
           });
           dataParsed2.push({
             date: response.data[i][0],
-            usDollars: response.data[i][2],
+            datakey: response.data[i][2],
           });
           dataParsed3.push({
             date: response.data[i][0],
-            usDollarsPerNormalizedInvasiveObservation: response.data[i][3],
+            datakey: response.data[i][3],
           });
         }
-        setData1(dataParsed1);
-        setData2(dataParsed2);
-        setData3(dataParsed3);
+        setData1(prevHistory => [...prevHistory, {dataarray: dataParsed1, lilid: optionString1}]);
+        setData2(prevHistory => [...prevHistory, {dataarray: dataParsed2, lilid: optionString2}]);
+        setData3(prevHistory => [...prevHistory, {dataarray: dataParsed3, lilid: optionString3}]);
       });
   };
 
   return (
-    <div>
-      <h2>Select Criteria</h2>
-      <div>
-        <h3>General</h3>
-        <label>
-          Select State:
-          <select name="state" value={options.state} onBlur={populateCounties} onChange={handleChange}>
-            <option value="">Select State</option>
-            {states.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select County:
-          <select name="county" value={options.county} onChange={handleChange}>
-            <option value="">Select County</option>
-            {counties.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select Date Resolution:
-          <select name="dateInterval" value={options.dateInterval} onChange={handleChange}>
-            <option value="">Select Resolution</option>
-            {dateIntervals.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Start Date:
-          <input
-            type="date"
-            id="startDate"
-            name="startDate"
-            value={options.startDate}
-            onChange={handleChange}
-            min="1950-01-01"
-            max="2023-12-31"
-          />
-          <br />
-          End Date:
-          <input
-            type="date"
-            id="endDate"
-            name="endDate"
-            value={options.endDate}
-            onChange={handleChange}
-            min="1950-01-01"
-            max="2023-12-31"
-          />
-        </label>
-      </div>
-      <div>
-        <h3>Farm Income/Expense Data:</h3>
-        <label>
-          Select Farm Income Data Type:
-          <select name="dataType" value={options.dataType} onBlur={populateCategories} onChange={handleChange}>
-            <option value="">Select Income Data Type</option>
-            {dataTypes.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select Category:
-          <select name="incomeCategory" value={options.incomeCategory} onChange={handleChange}>
-            <option value="">Select Category</option>
-            {incomeCategories.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div>
-        <h3>Insect Observations</h3>
-        <label>
-          Select Order:
-          <select name="order" value={options.order} onBlur={populateFamilies} onChange={handleChange}>
-            <option value="">Select Order</option>
-            {orders.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select Family:
-          <select name="family" value={options.family} onBlur={populateGenera} onChange={handleChange}>
-            <option value="">Select Family</option>
-            {families.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <br />
-        <label>
-          Select Genus:
-          <select name="genus" value={options.genus} onBlur={populateGenera} onChange={handleChange}>
-            <option value="">Select Genus</option>
-            {genera.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <hr style={{ margin: "20px 0" }} />
-      <button
-        onClick={() => {
-          generateGraph(options);
+    <div style={{ display: "block", paddingBottom: "50px" }}>
+      <fieldset
+        className="settings"
+        style={{
+          display: "inline-block",
+          width: "25%",
+          height: "550px",
+          overflowY: "scroll",
         }}
       >
-        Generate Graphs
-      </button>
-      {data1 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data1}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
+        <legend>Select Criteria</legend>
+        <div>
+          <h3>General</h3>
+          <label>
+            Select State:
+            <select
+              name="state"
+              value={
+                options.state.length === 0
+                  ? "All States (default)"
+                  : `Selected ${options.state.length}`
+              }
+              onChange={handleChange}
+              onBlur={populateCounties}
+            >
+              <option>
+                {options.state.length === 0
+                  ? "All"
+                  : `Selected ${options.state.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {states
+                .filter((item, idx) => !options.state.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.state.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("state", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+          <label>
+            Select County:
+            <select
+              name="county"
+              value={
+                options.county.length === 0
+                  ? "All"
+                  : `Selected ${options.county.length}`
+              }
+              onChange={handleChange}
+            >
+              <option>
+                {options.county.length === 0
+                  ? "All"
+                  : `Selected ${options.county.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {counties
+                .filter((item, idx) => !options.county.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+         </label>
+         <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.county.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("county", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+          <br />
+          <label>
+            Select Date Resolution:
+            <select name="dateInterval" value={options.dateInterval} onChange={handleChange}>
+             <option value="">Select Resolution</option>
+              {dateIntervals.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </label>
+         <br />
+          <label>
+           Start Date:
+            <input
+              type="date"
+             id="startDate"
+             name="startDate"
+             value={options.startDate}
+             onChange={handleChange}
+             min="1950-01-01"
+             max="2023-12-31"
+           />
+           <br />
+           End Date:
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={options.endDate}
+              onChange={handleChange}
+              min="1950-01-01"
+              max="2023-12-31"
+            />
+          </label>
+        </div>
+        <div>
+          <h3>Farm Income/Expense Data:</h3>
+          <label>
+            Select Farm Income Data Type:
+            <select name="dataType" value={options.dataType} onBlur={populateCategories} onChange={handleChange}>
+              <option value="">Select Income Data Type</option>
+              {dataTypes.map((option) => (
+                <option key={option} value={option}>{option}</option>
+             ))}
+            </select>
+          </label>
+          <br />
+          <label>
+            Select Category:
+            <select
+              name="incomeCategory"
+              value={
+                options.incomeCategory.length === 0
+                  ? "All"
+                  : `Selected ${options.incomeCategory.length}`
+              }
+              onChange={handleChange}
+            >
+              <option>
+                {options.incomeCategory.length === 0
+                  ? "All"
+                  : `Selected ${options.incomeCategory.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {incomeCategories
+                .filter((item, idx) => !options.incomeCategory.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.incomeCategory.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("incomeCategory", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3>Insect Observations</h3>
+          <label>
+            Select Order:
+            <select
+              name="order"
+              value={
+                options.order.length === 0
+                  ? "All"
+                  : `Selected ${options.order.length}`
+              }
+              onChange={handleChange}
+              onBlur={populateFamilies}
+            >
+              <option>
+                {options.order.length === 0
+                  ? "All"
+                  : `Selected ${options.order.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {orders
+                .filter((item, idx) => !options.order.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.order.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("order", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+          <label>
+            Select Family:
+            <select
+              name="family"
+              value={
+                options.family.length === 0
+                  ? "All"
+                  : `Selected ${options.family.length}`
+              }
+              onChange={handleChange}
+              onBlur={populateGenera}
+            >
+              <option>
+                {options.family.length === 0
+                  ? "All"
+                  : `Selected ${options.family.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {families
+                .filter((item, idx) => !options.family.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.family.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("family", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+          <label>
+            Select Genus:
+            <select
+              name="genus"
+              value={
+                options.genus.length === 0
+                  ? "All"
+                  : `Selected ${options.genus.length}`
+              }
+              onChange={handleChange}
+            >
+              <option>
+                {options.genus.length === 0
+                  ? "All"
+                  : `Selected ${options.genus.length}`}
+              </option>
+              <option value={"-----------"}>{"-----------"} </option>
+              {genera
+                .filter((item, idx) => !options.genus.includes(item[0]))
+                .map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <div style={{ paddingLeft: "20%", paddingRight: "20%" }}>
+            {options.genus.map((item, idx) => (
+              <div key={idx} style={{ display: "inline-block" }}>
+                <button
+                  onClick={() => removeSelectedItem("genus", item)}
+                >{`${item} x`}</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <hr style={{ margin: "20px 0" }} />
+        <button
+          onClick={() => {generateGraph(options);}}
         >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis domain={["dataMin", "dataMax"]} />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data1)}
-        </LineChart>
-      )}
-      {data2 && (
-        <LineChart
-          width={500}
-          height={400}
-          data={data2}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
+          Generate Graphs
+        </button>
+        <br />
+        <button
+          onClick={() => {clearCharts();}}
         >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data2)}
-        </LineChart>
-      )}
-      {data3 && (
-        <LineChart
-          width={700}
-          height={400}
-          data={data3}
-          margin={{
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-          }}
-        >
-          <CartesianGrid stroke="#f5f5f5" />
-          <XAxis dataKey="date" />
-          <YAxis />
-          <Tooltip />
-          <Legend
-            layout="vertical"
-            verticalAlign="top"
-            align="right"
-            height={36}
-          />
-          {lines(data3)}
-        </LineChart>
-      )}
+          Clear Graphs
+        </button>
+      </fieldset>
+      <div
+        className="graphs"
+        style={{
+          display: "inline-block",
+          width: "70%",
+          height: "550px",
+          overflowY: "scroll",
+        }}
+      >
+          <div style={{ alignContent: "center" }}>
+            <h2>Normalized Invasive Species Observations (Per Thousand Insects)</h2>
+            <br />
+            <div style={{ display: "inline-block" }}>
+              <LineChart
+                width={800}
+                height={500}
+                data={transformDataForRecharts(data1)}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 75,
+                }}
+              >
+                <CartesianGrid stroke="#f5f5f5" />
+                <XAxis dataKey="date" />
+                <YAxis domain={["dataMin", "dataMax"]}>
+                <Label
+                  style={{
+                    textAnchor: "middle",
+                    fontSize: "130%",
+                    fill: "black",
+                  }}
+                  position={"left"}
+                  offset={20}
+                  angle={270} 
+                  value={"Invasive Insects Per Thousand Observations"} />
+                </YAxis>
+                <Tooltip />
+                <Legend
+                  layout="horizontal"
+                  verticalAlign="bottom"
+                  align="bottom"
+                  height={36}
+                />
+                {data1.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
+                </LineChart>
+            </div>
+          </div>
+        
+        <div style={{ alignContent: "center" }}>
+            <h2>Farm Income/Expense Data</h2>
+            <br />
+            <div style={{ display: "inline-block" }}>
+              <LineChart
+                width={800}
+                height={500}
+                data={transformDataForRecharts(data2)}
+                margin={{
+                  top: 20,
+                  right: 20,
+                  bottom: 20,
+                  left: 75,
+                }}
+              >
+                <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis domain={["dataMin", "dataMax"]}>
+                <Label
+                  style={{
+                    textAnchor: "middle",
+                    fontSize: "130%",
+                    fill: "black",
+                  }}
+                  position={"left"}
+                  offset={50}
+                  angle={270} 
+                  value={"US Dollars"} />
+                </YAxis>
+              <Tooltip />
+              <Legend
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="bottom"
+                height={36}
+              />
+              {data2.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
+            </LineChart>
+          </div>
+        </div>
+        <div style={{ alignContent: "center" }}>
+          <h2>Dollars Per Normalized Observation</h2>
+          <br />
+          <div style={{ display: "inline-block" }}>
+            <LineChart
+              width={800}
+              height={500}
+              data={transformDataForRecharts(data3)}
+              margin={{
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 75,
+              }}
+            >
+              <CartesianGrid stroke="#f5f5f5" />
+              <XAxis dataKey="date" />
+              <YAxis domain={["dataMin", "dataMax"]}>
+                <Label
+                  style={{
+                    textAnchor: "middle",
+                    fontSize: "130%",
+                    fill: "black",
+                  }}
+                  position={"left"}
+                  offset={50}
+                  angle={270} 
+                  value={"USD Per Normalized Observation"} />
+                </YAxis>
+              <Tooltip />
+              <Legend
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="bottom"
+                height={36}
+              />
+              {data3.map(({ lilid }) => (
+                  <Line
+                    key={lilid}
+                    type="monotone"
+                    dataKey={lilid}
+                    stroke={getRandomColor()}
+                    dot={false}
+                  />
+                  ))}
+            </LineChart>
+          </div>
+        </div>
     </div>
+    <br />
+  </div>
   );
 }
 
