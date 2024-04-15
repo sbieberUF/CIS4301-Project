@@ -66,8 +66,6 @@ function HousingPriceIndexTab() {
     }
   };
   
-  
-
   const fetchYears = async (state, municipality) => {
     if (!state) return;
 
@@ -187,7 +185,6 @@ function HousingPriceIndexTab() {
         housingConsolidated[key][`housingIndex_${state_name}`] = index_value;
       });
 
-
       let precipitationConsolidated = {};
       precipitationResponse.data.forEach(([quarter, amount, precipitation_year, state_name]) => {
         const key = `${precipitation_year}-${quarter}`;
@@ -255,7 +252,6 @@ function HousingPriceIndexTab() {
     }
   };
   
-
   const isOutlier = (value, average) => Math.abs(value) > 5 * average; // TODO: Tweak outlier detection calculation
   
   const handleHideNoWeatherStationsChange = (event) => {
@@ -308,7 +304,7 @@ function HousingPriceIndexTab() {
           </select>
         </label>
       </div>
-      <h5>Hold CTRL to select multiple options</h5>
+      <h5>Hold CTRL to select multiple options | Municipality and Year selection are optional</h5>
       <button onClick={fetchData}>Load Data</button>
 
       <LineChart width={600} height={300} data={housingData}>
